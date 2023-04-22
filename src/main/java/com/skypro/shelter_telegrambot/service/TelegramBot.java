@@ -49,7 +49,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             switch (messageText) {
                 case "/start":
                     try {
-                        startCommandReceived(chatId, update.getMessage().getChat().getFirstName(), checkUser(update.getMessage().getFrom().getId()));
+                        startCommandReceived(chatId, update.getMessage().getChat().getFirstName(), update);
                     } catch (TelegramApiException e) {
                         throw new RuntimeException(e);
                     }
@@ -97,7 +97,7 @@ public class TelegramBot extends TelegramLongPollingBot {
      * @param name
      * @throws TelegramApiException
      */
-    private void startCommandReceived(long chatId, String name, boolean isApplied) throws TelegramApiException {
+    private void startCommandReceived(long chatId, String name, Update update) throws TelegramApiException {
 
         String greeting = "Привет, " + name + "!";
         String infoAboutBot = """
@@ -109,7 +109,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 """;
         String question = "Выбери какой приют тебя интересует:";
 
-        if (isApplied) {
+        if (checkUser(update.getMessage().getFrom().getId())) {
             sendMessage(chatId, greeting);
             sendMessage(chatId, question, createButtons(2, new ArrayList<>(Arrays.asList(
                     new Button("Приют для кошек", "CAT"),
@@ -120,6 +120,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(chatId, question, createButtons(2, new ArrayList<>(Arrays.asList(
                     new Button("Приют для кошек", "CAT"),
                     new Button("Приют для собак", "DOG")))));
+
+            User newUser = new User();
+            newUser.setId(update.getMessage().getFrom().getId());
+            newUser.setFullName(update.getMessage().getFrom().getFirstName() + " " + update.getMessage().getFrom().getLastName());
+            userDAO.addUser(newUser);
 
         }
 
