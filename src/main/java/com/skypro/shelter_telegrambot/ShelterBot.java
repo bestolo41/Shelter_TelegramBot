@@ -10,6 +10,8 @@ import java.util.Map;
 
 public class ShelterBot extends TelegramLongPollingBot {
     private final String botToken = "6226311250:AAFKTTFvV0JHHkZlbyNgG-7-s1nN3kvKpOI";
+    private static final String CAT_SHELTER = "Кошки";
+    private static final String DOG_SHELTER = "Собаки";
 
     // Хранение данных пользователя (chatId -> тип приюта)
     private Map<Long, String> userData = new HashMap<>();
@@ -23,9 +25,10 @@ public class ShelterBot extends TelegramLongPollingBot {
     private void initShelters() {
         ShelterInfo catShelter = new ShelterInfo("CatsShelter", "Moscow", "08:00-20:00", "No Smoling", "Security");
         ShelterInfo dogShelter = new ShelterInfo("DogsShelter", "Тула", "08:00-20:00", "No Smoling", "Security");
-        shelters.put("Кошки", catShelter);
-        shelters.put("Собаки", dogShelter);
+        shelters.put(CAT_SHELTER, catShelter);
+        shelters.put(DOG_SHELTER, dogShelter);
     }
+
     // Отображение главного меню
     private void showMainMenu(SendMessage message, String shelterType) {
         String mainMenuText = String.format("Выбран приют для %s. Воспользуйтесь меню:\n\n" +
@@ -79,19 +82,20 @@ public class ShelterBot extends TelegramLongPollingBot {
         switch (messageText) {
             case "1":
             case "Приют для кошек":
-                userData.put(chatId, "кошки");
-                showMainMenu(message, "Кошки");
+                userData.put(chatId, CAT_SHELTER);
+                showMainMenu(message, CAT_SHELTER);
                 break;
             case "2":
             case "Приют для собак":
-                userData.put(chatId, "собаки");
-                showMainMenu(message, "Собаки");
+                userData.put(chatId, DOG_SHELTER);
+                showMainMenu(message, DOG_SHELTER);
                 break;
             default:
                 showUnknownCommand(message);
                 break;
         }
     }
+
     private void handleStart(SendMessage message) {
         String welcomeText = "Привет! Я бот-помощник приютов для животных. Пожалуйста, выберите приют:\n\n" +
 
