@@ -1,7 +1,9 @@
 package com.skypro.shelter_telegrambot.service;
 
 import com.skypro.shelter_telegrambot.configuration.InfoServiceConfig;
+import org.springframework.stereotype.Service;
 
+@Service
 public class InfoService {
 
     final InfoServiceConfig infoServiceConfig;
@@ -11,10 +13,10 @@ public class InfoService {
     }
 
     public String getDatingRules (String callbackData) {
-        if (callbackData.equals("Dating_rules_cat")) {
+        if (callbackData.equals("DATING_RULES_CAT")) {
             return infoServiceConfig.getRulesCat();
         }
-        else if (callbackData.equals("Dating_rules_dog")) {
+        else if (callbackData.equals("DATING_RULES_DOG")) {
             return infoServiceConfig.getRulesDog();
         } return null;
     }

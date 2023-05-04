@@ -12,7 +12,7 @@ public class InfoServiceConfig {
     @Value("${rules.for.getting.to.know.an.cat}")
     String rulesCat;
 
-    @Value("${rules.for.getting.to.know.an.cat}")
+    @Value("${rules.for.getting.to.know.an.dog}")
     String rulesDog;
 
 

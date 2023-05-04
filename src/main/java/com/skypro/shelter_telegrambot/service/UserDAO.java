@@ -1,9 +1,10 @@
 package com.skypro.shelter_telegrambot.service;
 
 import com.skypro.shelter_telegrambot.model.User;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Service
 public interface UserDAO {
 
     void addUser(User newUser);
