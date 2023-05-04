@@ -3,6 +3,8 @@ package com.skypro.shelter_telegrambot.service;
 import com.skypro.shelter_telegrambot.TelegramBotConfig.TelegramBotConfig;
 import com.skypro.shelter_telegrambot.model.Button;
 import com.skypro.shelter_telegrambot.model.User;
+import com.skypro.shelter_telegrambot.service.CatShelterService;
+
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,11 +25,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     final TelegramBotConfig telegramBotConfig;
     final UserDAO userDAO;
     final InfoService infoService;
+    private final CatShelterService catShelterService;
 
-    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService) {
+    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService) {
         this.telegramBotConfig = telegramBotConfig;
         this.userDAO = userDAO;
         this.infoService = infoService;
+        this.catShelterService = catShelterService;
     }
 
 
@@ -46,6 +50,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
+            if ("/call_volunteer".equals(messageText)) { // Замените на нужную команду
+                catShelterService.requestVolunteer(chatId);
+            }
 
 
             switch (messageText) {
@@ -325,5 +332,24 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         return users.contains(u);
     }
+    //Сохраняем пользователя в базе
+    public void saveUserInformation(String userData, long chatId) throws TelegramApiException {
+        // Разделяем полученные данные на части
+        String[] parts = userData.split(",\\s*");
+        if (parts.length != 4) {
+            // Отправьте сообщение об ошибке
+            sendMessage(chatId, "Неверный формат данных. Пожалуйста, введите данные в формате: Фамилия Имя,Возраст, Адрес, Телефон");
+            return;
+        }
+        // Создаем объект User с полученными данными
+        User user = new User();
+
+        // Сохраняем данные пользователя в базе данных
+        UserRepository.saveUser(user);
+
+        // Отправляем сообщение с подтверждением
+        sendMessage(chatId, "Ваши данные успешно сохранены.");
+    }
+
 
 }
