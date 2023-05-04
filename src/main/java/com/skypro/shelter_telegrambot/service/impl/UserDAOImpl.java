@@ -5,9 +5,10 @@ import com.skypro.shelter_telegrambot.model.User;
 import com.skypro.shelter_telegrambot.service.UserDAO;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Service
 public class UserDAOImpl implements UserDAO {
     @Override
     public void addUser(User newUser) {

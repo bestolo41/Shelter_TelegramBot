@@ -3,7 +3,6 @@ package com.skypro.shelter_telegrambot.service;
 import com.skypro.shelter_telegrambot.TelegramBotConfig.TelegramBotConfig;
 import com.skypro.shelter_telegrambot.model.Button;
 import com.skypro.shelter_telegrambot.model.User;
-import com.skypro.shelter_telegrambot.service.impl.UserDAOImpl;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -22,10 +21,13 @@ import java.util.List;
 public class TelegramBot extends TelegramLongPollingBot {
 
     final TelegramBotConfig telegramBotConfig;
-    final UserDAO userDAO = new UserDAOImpl();
+    final UserDAO userDAO;
+    final InfoService infoService;
 
-    TelegramBot(TelegramBotConfig telegramBotConfig) {
+    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService) {
         this.telegramBotConfig = telegramBotConfig;
+        this.userDAO = userDAO;
+        this.infoService = infoService;
     }
 
 
@@ -67,32 +69,84 @@ public class TelegramBot extends TelegramLongPollingBot {
             long messageId = update.getCallbackQuery().getMessage().getMessageId();
             long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-            if (callbackData.equals("CAT")) {
-                editMessage(chatId, messageId, "Выберите действие для приюта для кошек:", createButtons(1, new ArrayList<>(Arrays.asList(
-                        new Button("Узнать информацию о приюте", "INFO"),
-                        new Button("Как взять кошку из приюта", "HOW"),
-                        new Button("Прислать отчет о питомце", "REPORT"),
-                        new Button("Позвать волонтера", "VOLUNTEER")
-                ))));
-            } else if (callbackData.equals("DOG")) {
-                editMessage(chatId, messageId, "Выберите действие для приюта для собак:", createButtons(1, new ArrayList<>(Arrays.asList(
-                        new Button("Узнать информацию о приюте", "INFO"),
-                        new Button("Как взять собаку из приюта", "HOW"),
-                        new Button("Прислать отчет о питомце", "REPORT"),
-                        new Button("Позвать волонтера", "VOLUNTEER")
-                ))));
-            } else {
-                try {
-                    sendMessage(chatId, "Извини, я не понял");
-                } catch (TelegramApiException e) {
-                    throw new RuntimeException(e);
-                }
+            switch (callbackData) {
+                case "CAT_SHELTER":
+                    editMessage(chatId, messageId, "Выберите действие для приюта для кошек:", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Узнать информацию о приюте", "INFO_CAT"),
+                            new Button("Как взять кошку из приюта", "HOW_CAT"),
+                            new Button("Прислать отчет о питомце", "REPORT_CAT"),
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT")))));
+                    break;
+                case "DOG_SHELTER":
+                    editMessage(chatId, messageId, "Выберите действие для приюта для собак:", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Узнать информацию о приюте", "INFO_DOG"),
+                            new Button("Как взять собаку из приюта", "HOW_DOG"),
+                            new Button("Прислать отчет о питомце", "REPORT_DOG"),
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG")))));
+                    break;
+                case "INFO_CAT":
+                    editMessage(chatId, messageId, "Какую информацию хотите узнать о приюте для кошек?", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Общая информация о приюте", "GEN_INFO_CAT"),
+                            new Button("График, адрес и схема проезда", "TIME_ADDRESS_DIRECTION_CAT"),
+                            new Button("Контакты охраны", "SECURITY_CAT"),
+                            new Button("Техника безопасности", "SAFETY_CAT"),
+                            new Button("Оставить контакты", "SET_CONTACT_CAT"),
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT")))));
+                    break;
+                case "INFO_DOG":
+                    editMessage(chatId, messageId, "Какую информацию хотите узнать о приюте для собак?", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Общая информация о приюте", "GEN_INFO_DOG"),
+                            new Button("График, адрес и схема проезда", "TIME_ADDRESS_DIRECTION_DOG"),
+                            new Button("Контакты охраны", "SECURITY_DOG"),
+                            new Button("Техника безопасности", "SAFETY_DOG"),
+                            new Button("Оставить контакты", "SET_CONTACT_DOG"),
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG")))));
+                    break;
+                case "HOW_CAT":
+                    editMessage(chatId, messageId, "Информация для получения кошки из приюта:", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Правила знакомства", "DATING_RULES_CAT"),
+                            new Button("Необходимые документы", "DOCS"),
+                            new Button("Рекомендации по транспортировке кошки", "TRANSPORTING_CAT"),
+                            new Button("Рекомендации по обустройству дома для котенка", "HOME_LITTLE_CAT"),
+                            new Button("Рекомендации по обустройству дома для взрослого кота", "HOME_ADULT_CAT"),
+                            new Button("Рекомендации по обустройству дома для кота с ограниченными возможностями", "HOME_INVALID_CAT"),
+                            new Button("Причины для отказа", "REASONS_CAT"),
+                            new Button("Оставить контакты", "SET_CONTACT_CAT"),
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT")))));
+                    break;
+                case "HOW_DOG":
+                    editMessage(chatId, messageId, "Информация для получения собаки из приюта:", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Правила знакомства", "DATING_RULES_DOG"),
+                            new Button("Необходимые документы", "DOCS"),
+                            new Button("Рекомендации по транспортировке собаки", "TRANSPORTING_DOG"),
+                            new Button("Рекомендации по обустройству дома для щенка", "HOME_LITTLE_DOG"),
+                            new Button("Рекомендации по обустройству дома для взрослой собаки", "HOME_ADULT_DOG"),
+                            new Button("Рекомендации по обустройству дома для собаки с ограниченными возможностями", "HOME_INVALID_DOG"),
+                            new Button("Причины для отказа", "REASONS_DOG"),
+                            new Button("Оставить контакты", "SET_CONTACT_DOG"),
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG")))));
+                    break;
+
+                case "DATING_RULES_CAT":
+
+                case "DATING_RULES_DOG":
+                    editMessage(chatId, messageId, infoService.getDatingRules(callbackData));
+
+                default:
+                    try {
+                        sendMessage(chatId, "Извини, я не понял");
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    break;
             }
         }
     }
 
+
     /**
      * Отправляет сообщение-приветствие и начальное меню после апдейта /start
+     *
      * @param chatId
      * @param name
      * @throws TelegramApiException
@@ -108,18 +162,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                 А еще ты можешь отправлять мне ежедневные отчеты о том, как животное приспосабливается к новой обстановке.
                 """;
         String question = "Выбери какой приют тебя интересует:";
+        InlineKeyboardMarkup catOrDogShelterButtons = createButtons(2, new ArrayList<>(Arrays.asList(
+                new Button("Приют для кошек", "CAT_SHELTER"),
+                new Button("Приют для собак", "DOG_SHELTER"))));
 
         if (checkUser(update.getMessage().getFrom().getId())) {
             sendMessage(chatId, greeting);
-            sendMessage(chatId, question, createButtons(2, new ArrayList<>(Arrays.asList(
-                    new Button("Приют для кошек", "CAT"),
-                    new Button("Приют для собак", "DOG")))));
+            sendMessage(chatId, question, catOrDogShelterButtons);
         } else {
             sendMessage(chatId, greeting);
             sendMessage(chatId, infoAboutBot);
-            sendMessage(chatId, question, createButtons(2, new ArrayList<>(Arrays.asList(
-                    new Button("Приют для кошек", "CAT"),
-                    new Button("Приют для собак", "DOG")))));
+            sendMessage(chatId, question, catOrDogShelterButtons);
 
             User newUser = new User();
             newUser.setId(update.getMessage().getFrom().getId());
@@ -133,6 +186,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     /**
      * Создает и отправляет сообщение, которое содержит только текст
+     *
      * @param chatId
      * @param textToSend
      * @throws TelegramApiException
@@ -150,6 +204,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     /**
      * Перегрузка метода отправки сообщений, создает и отправляет сообщение с кнопками
+     *
      * @param chatId
      * @param textToSend
      * @param buttons
@@ -169,11 +224,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     /**
      * Изменяет текстовое сообщение по его id
+     *
      * @param chatId
      * @param textToReplace
      * @return
      */
-    private void editMessage(long chatId,long messageId, String textToReplace) {
+    private void editMessage(long chatId, long messageId, String textToReplace) {
         EditMessageText message = new EditMessageText();
         message.setChatId(String.valueOf(chatId));
         message.setText(textToReplace);
@@ -187,6 +243,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     /**
      * Изменяет сообщение с кнопками по его id
+     *
      * @param chatId
      * @param textToReplace
      * @param buttons
@@ -210,7 +267,7 @@ public class TelegramBot extends TelegramLongPollingBot {
      * Результат метода необходимо указать в setReplyMarkup сообщения
      *
      * @param maxButtonsInLine - Необходимое количесвто кнопок в одной строке
-     * @param buttons - Массив объектов Button, которые представляют собой создаваемые кнопки и собержат в себе название кнопки и его callbackData
+     * @param buttons          - Массив объектов Button, которые представляют собой создаваемые кнопки и собержат в себе название кнопки и его callbackData
      * @return - InlineKeyboardMarkup
      */
     private InlineKeyboardMarkup createButtons(int maxButtonsInLine, ArrayList<Button> buttons) {
@@ -257,6 +314,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     /**
      * Проверяет пользовался ли ботом этот пользователь или нет
+     *
      * @param userId
      * @return
      */
