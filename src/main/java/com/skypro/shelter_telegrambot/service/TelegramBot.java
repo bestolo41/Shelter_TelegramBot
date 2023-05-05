@@ -3,7 +3,6 @@ package com.skypro.shelter_telegrambot.service;
 import com.skypro.shelter_telegrambot.TelegramBotConfig.TelegramBotConfig;
 import com.skypro.shelter_telegrambot.model.Button;
 import com.skypro.shelter_telegrambot.model.User;
-import com.skypro.shelter_telegrambot.service.CatShelterService;
 
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -26,12 +25,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     final UserDAO userDAO;
     final InfoService infoService;
     private final CatShelterService catShelterService;
+    private final DogShelterService dogShelterService;
 
-    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService) {
+    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService, DogShelterService dogShelterService) {
         this.telegramBotConfig = telegramBotConfig;
         this.userDAO = userDAO;
         this.infoService = infoService;
         this.catShelterService = catShelterService;
+        this.dogShelterService = dogShelterService;
     }
 
 
@@ -77,20 +78,36 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getCallbackQuery().getMessage().getChatId();
 
             switch (callbackData) {
+                case "MAIN_MENU":
+                    editMessage(chatId, messageId, "Выбери какой приют тебя интересует:", createButtons(2, new ArrayList<>(Arrays.asList(
+                            new Button("Приют для кошек", "CAT_SHELTER"),
+                            new Button("Приют для собак", "DOG_SHELTER")))));
+                    break;
+
+                case "BACK_GENERAL_CAT":
+
                 case "CAT_SHELTER":
                     editMessage(chatId, messageId, "Выберите действие для приюта для кошек:", createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Узнать информацию о приюте", "INFO_CAT"),
                             new Button("Как взять кошку из приюта", "HOW_CAT"),
                             new Button("Прислать отчет о питомце", "REPORT_CAT"),
-                            new Button("Позвать волонтера", "VOLUNTEER_CAT")))));
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT"),
+                            new Button("Главное меню", "MAIN_MENU")))));
                     break;
+
+                case "BACK_GENERAL_DOG":
+
                 case "DOG_SHELTER":
                     editMessage(chatId, messageId, "Выберите действие для приюта для собак:", createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Узнать информацию о приюте", "INFO_DOG"),
                             new Button("Как взять собаку из приюта", "HOW_DOG"),
                             new Button("Прислать отчет о питомце", "REPORT_DOG"),
-                            new Button("Позвать волонтера", "VOLUNTEER_DOG")))));
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG"),
+                            new Button("Главное меню", "MAIN_MENU")))));
                     break;
+
+                case "BACK_INFO_CAT":
+
                 case "INFO_CAT":
                     editMessage(chatId, messageId, "Какую информацию хотите узнать о приюте для кошек?", createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Общая информация о приюте", "GEN_INFO_CAT"),
@@ -98,8 +115,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                             new Button("Контакты охраны", "SECURITY_CAT"),
                             new Button("Техника безопасности", "SAFETY_CAT"),
                             new Button("Оставить контакты", "SET_CONTACT_CAT"),
-                            new Button("Позвать волонтера", "VOLUNTEER_CAT")))));
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT"),
+                            new Button("Назад", "BACK_GENERAL_CAT")))));
                     break;
+
+                case "BACK_INFO_DOG":
+
                 case "INFO_DOG":
                     editMessage(chatId, messageId, "Какую информацию хотите узнать о приюте для собак?", createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Общая информация о приюте", "GEN_INFO_DOG"),
@@ -107,7 +128,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                             new Button("Контакты охраны", "SECURITY_DOG"),
                             new Button("Техника безопасности", "SAFETY_DOG"),
                             new Button("Оставить контакты", "SET_CONTACT_DOG"),
-                            new Button("Позвать волонтера", "VOLUNTEER_DOG")))));
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG"),
+                            new Button("Назад", "BACK_GENERAL_DOG")))));
                     break;
                 case "HOW_CAT":
                     editMessage(chatId, messageId, "Информация для получения кошки из приюта:", createButtons(1, new ArrayList<>(Arrays.asList(
@@ -138,6 +160,62 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 case "DATING_RULES_DOG":
                     editMessage(chatId, messageId, infoService.getDatingRules(callbackData));
+                    break;
+
+                case "GEN_INFO_CAT":
+                    editMessage(chatId, messageId, catShelterService.getGeneralInfo(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "GEN_INFO_DOG":
+                    editMessage(chatId, messageId, dogShelterService.getGeneralInfo(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
+                case "TIME_ADDRESS_DIRECTION_CAT":
+                    editMessage(chatId, messageId, catShelterService.getAddressAndDirections(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "TIME_ADDRESS_DIRECTION_DOG":
+                    editMessage(chatId, messageId, dogShelterService.getAddressAndDirections(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
+                case "SECURITY_CAT":
+                    editMessage(chatId, messageId, catShelterService.getSecurityContacts(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "SECURITY_DOG":
+                    editMessage(chatId, messageId, dogShelterService.getSecurityContacts(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
+                case "SAFETY_CAT":
+                    editMessage(chatId, messageId, catShelterService.getSafetyRules(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "SAFETY_DOG":
+                    editMessage(chatId, messageId, dogShelterService.getSafetyRules(), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
+                case "SET_CONTACT_CAT":
+
+                case "VOLUNTEER_CAT":
+                    editMessage(chatId, messageId, "!!!В РАЗРАБОТКЕ!!!", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "SET_CONTACT_DOG":
+
+                case "VOLUNTEER_DOG":
+                    editMessage(chatId, messageId, "!!!В РАЗРАБОТКЕ!!!", createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
 
                 default:
                     try {
