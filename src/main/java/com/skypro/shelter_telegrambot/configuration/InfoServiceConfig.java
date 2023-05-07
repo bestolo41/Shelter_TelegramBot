@@ -15,15 +15,44 @@ public class InfoServiceConfig {
     @Value("${rules.for.getting.to.know.an.dog}")
     String rulesDog;
 
+    @Value("${list.of.documents}")
+    String documents;
 
+    @Value("${transportation.cat}")
+    String transportationCat;
 
+    @Value("${transportation.dog}")
+    String transportationDog;
 
+    @Value("${home.improvement.cat}")
+    String homeLittleCat;
 
+    @Value("${home.improvement.dog}")
+    String homeLittleDog;
 
+    @Value("${home.improvement.adult.cat}")
+    String homeAdultCat;
 
+    @Value("${home.improvement.adult.dog}")
+    String homeAdultDog;
 
+    @Value("${home.improvement.disability.cat}")
+    String disabilityCat;
 
+    @Value("${home.improvement.disability.dog}")
+    String disabilityDog;
 
+    @Value("${tips.from.a.dog.handler.on.primary.communication.with.a.dog}")
+    String primaryCommunicationDogHandler;
+
+    @Value("${recommendations.for.proven.dog.handlers}")
+    String provenDogHandler;
+
+    @Value("${list.of.reasons.why.they.may.refuse.cat}")
+    String listOfReasonCat;
+
+    @Value("${list.of.reasons.why.they.may.refuse.dog}")
+    String listOfReasonDog;
 
 
 }
