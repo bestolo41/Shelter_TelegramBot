@@ -2,6 +2,7 @@ package com.skypro.shelter_telegrambot.service;
 
 import com.skypro.shelter_telegrambot.configuration.InfoServiceConfig;
 import com.skypro.shelter_telegrambot.exception.ExceptionInfoService;
+import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Service
@@ -20,9 +21,9 @@ public class InfoService {
      * @throws ExceptionInfoService
      */
     public String getDatingRules(String callbackData) {
-        if (callbackData.equals("Dating_rules_cat")) {
+        if (callbackData.equals("DATING_RULES_CAT")) {
             return infoServiceConfig.getRulesCat();
-        } else if (callbackData.equals("Dating_rules_dog")) {
+        } else if (callbackData.equals("DATING_RULES_DOG")) {
             return infoServiceConfig.getRulesDog();
         }
        else throw new ExceptionInfoService("Ошибка в правилах знакомства в животными");
@@ -35,7 +36,7 @@ public class InfoService {
      * @throws ExceptionInfoService
      */
     public String getDocuments(String callbackData) {
-        if (callbackData.equals("DOCS")) {
+        if (callbackData.equals("DOCS_CAT") || callbackData.equals("DOCS_DOG")) {
             return infoServiceConfig.getDocuments();
         } else
             throw new ExceptionInfoService("Ошибка в необходимых документах");

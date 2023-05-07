@@ -131,35 +131,49 @@ public class TelegramBot extends TelegramLongPollingBot {
                             new Button("Позвать волонтера", "VOLUNTEER_DOG"),
                             new Button("Назад", "BACK_GENERAL_DOG")))));
                     break;
+
+                case "BACK_HOW_CAT":
+
                 case "HOW_CAT":
                     editMessage(chatId, messageId, "Информация для получения кошки из приюта:", createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Правила знакомства", "DATING_RULES_CAT"),
-                            new Button("Необходимые документы", "DOCS"),
+                            new Button("Необходимые документы", "DOCS_CAT"),
                             new Button("Рекомендации по транспортировке кошки", "TRANSPORTING_CAT"),
                             new Button("Рекомендации по обустройству дома для котенка", "HOME_LITTLE_CAT"),
                             new Button("Рекомендации по обустройству дома для взрослого кота", "HOME_ADULT_CAT"),
                             new Button("Рекомендации по обустройству дома для кота с ограниченными возможностями", "HOME_INVALID_CAT"),
                             new Button("Причины для отказа", "REASONS_CAT"),
                             new Button("Оставить контакты", "SET_CONTACT_CAT"),
-                            new Button("Позвать волонтера", "VOLUNTEER_CAT")))));
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT"),
+                            new Button("Назад", "BACK_GENERAL_CAT")))));
                     break;
+
+                case "BACK_HOW_DOG":
+
                 case "HOW_DOG":
                     editMessage(chatId, messageId, "Информация для получения собаки из приюта:", createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Правила знакомства", "DATING_RULES_DOG"),
-                            new Button("Необходимые документы", "DOCS"),
+                            new Button("Необходимые документы", "DOCS_DOG"),
                             new Button("Рекомендации по транспортировке собаки", "TRANSPORTING_DOG"),
                             new Button("Рекомендации по обустройству дома для щенка", "HOME_LITTLE_DOG"),
                             new Button("Рекомендации по обустройству дома для взрослой собаки", "HOME_ADULT_DOG"),
                             new Button("Рекомендации по обустройству дома для собаки с ограниченными возможностями", "HOME_INVALID_DOG"),
                             new Button("Причины для отказа", "REASONS_DOG"),
+                            new Button("Советы кинолога по первичному общению с собакой", "PRIMARY_RECOMMENDATION"),
+                            new Button("Рекомендованные кинологи", "PROVEN_DOG_HANDLER_RECOMMENDATION"),
                             new Button("Оставить контакты", "SET_CONTACT_DOG"),
-                            new Button("Позвать волонтера", "VOLUNTEER_DOG")))));
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG"),
+                            new Button("Назад", "BACK_GENERAL_DOG")))));
                     break;
 
                 case "DATING_RULES_CAT":
+                    editMessage(chatId, messageId, infoService.getDatingRules(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
 
                 case "DATING_RULES_DOG":
-                    editMessage(chatId, messageId, infoService.getDatingRules(callbackData));
+                    editMessage(chatId, messageId, infoService.getDatingRules(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
                     break;
 
                 case "GEN_INFO_CAT":
@@ -216,7 +230,74 @@ public class TelegramBot extends TelegramLongPollingBot {
                             new Button("Назад", "BACK_INFO_DOG")))));
                     break;
 
+                case "DOCS_CAT":
+                    editMessage(chatId, messageId, infoService.getDocuments(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
+                case "DOCS_DOG":
+                    editMessage(chatId, messageId, infoService.getDocuments(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
+                case "TRANSPORTING_CAT":
+                    editMessage(chatId, messageId, infoService.getRecommendationForTransportingAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
+
+                case "TRANSPORTING_DOG":
+                    editMessage(chatId, messageId, infoService.getRecommendationForTransportingAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
+
+                case "HOME_LITTLE_CAT":
+                    editMessage(chatId, messageId, infoService.getRecommendationHomeImprovementForLittleAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
+
+                case "HOME_LITTLE_DOG":
+                    editMessage(chatId, messageId, infoService.getRecommendationHomeImprovementForLittleAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
+
+                case "HOME_ADULT_CAT":
+                    editMessage(chatId, messageId, infoService.getRecommendationHomeImprovementForAdultAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
+
+                case "HOME_ADULT_DOG":
+                    editMessage(chatId, messageId, infoService.getRecommendationHomeImprovementForAdultAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
+
+                case "HOME_INVALID_CAT":
+                    editMessage(chatId, messageId, infoService.getRecommendationHomeImprovementForDisabilityAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
+
+                case "HOME_INVALID_DOG":
+                    editMessage(chatId, messageId, infoService.getRecommendationHomeImprovementForDisabilityAnimal(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
+
+                case "REASONS_CAT":
+                    editMessage(chatId, messageId, infoService.getListOfReason(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
+
+                case "REASONS_DOG":
+                    editMessage(chatId, messageId, infoService.getListOfReason(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
+
+                case "PRIMARY_RECOMMENDATION":
+                    editMessage(chatId, messageId, infoService.getPrimaryRecommendationDogHandler(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
+
+                case "PROVEN_DOG_HANDLER_RECOMMENDATION":
+                    editMessage(chatId, messageId, infoService.getRecommendationProvenDogHandler(callbackData), createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
                 default:
                     try {
                         sendMessage(chatId, "Извини, я не понял");
