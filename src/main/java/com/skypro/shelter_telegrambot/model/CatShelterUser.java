@@ -1,5 +1,7 @@
 package com.skypro.shelter_telegrambot.model;
 
+import lombok.Data;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -7,10 +9,14 @@ import javax.persistence.Table;
 import java.util.Objects;
 @Entity
 @Table(name = "catShelterUsers")
+@Data
 public class CatShelterUser {
+    public CatShelterUser(long id) {
+        this.id = id;
+    }
 
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     @Column(name = "id")
     private long id;
     @Column(name = "full_name")

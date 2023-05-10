@@ -15,4 +15,9 @@ public class TelegramBotConfig {
 
     @Value("${bot.token}")
     String token;
+
+    @Value("${volunteerBot.name}")
+    String VolunteerBotName;
+    @Value("${volunteerBot.token}")
+    String VolunteerBotToken;
 }

@@ -16,15 +16,4 @@ public class MessageService {
         return deleteMessage;
     }
 
-    public SendMessage sendFullNameRequestMessage(long chatId, String catOrDogIdentifier) {
-        SendMessage fullNameRequestMessage = new SendMessage();
-        fullNameRequestMessage.setText("Введите имя и фамилию:");
-        fullNameRequestMessage.setChatId(chatId);
-        if (catOrDogIdentifier.equals("SET_CONTACT_CAT")) {
-            TelegramBot.fullNameForCatShelterRequestId = TelegramBot.callbackQueryMessageId;
-        } else if (catOrDogIdentifier.equals("SET_CONTACT_DOG")) {
-            TelegramBot.fullNameForDogShelterRequestId = TelegramBot.callbackQueryMessageId;
-        }
-        return fullNameRequestMessage;
-    }
 }
