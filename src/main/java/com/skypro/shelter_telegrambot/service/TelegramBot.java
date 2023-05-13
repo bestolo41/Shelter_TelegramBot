@@ -27,30 +27,24 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final Map<Long, DogShelterUser> dogUsersForSaving = new HashMap<>();
     private final CatShelterUser catUser = new CatShelterUser();
     private final DogShelterUser dogUser = new DogShelterUser();
-    private boolean dialogueMode = false;
-    private long volunteerChatId;
     private final TelegramBotConfig telegramBotConfig;
     private final UserDAO userDAO;
-    private final VolunteerDAO volunteerDAO;
     private final InfoService infoService;
     private final CatShelterService catShelterService;
     private final DogShelterService dogShelterService;
     private final UserService userService;
     private final MessageService messageService;
-    private final VolunteerBot volunteerBot;
 
 
     @Lazy
-    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, VolunteerDAO volunteerDAO, InfoService infoService, CatShelterService catShelterService, DogShelterService dogShelterService, UserService userService, MessageService messageService, VolunteerBot volunteerBot) {
+    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService, DogShelterService dogShelterService, UserService userService, MessageService messageService) {
         this.telegramBotConfig = telegramBotConfig;
         this.userDAO = userDAO;
-        this.volunteerDAO = volunteerDAO;
         this.infoService = infoService;
         this.catShelterService = catShelterService;
         this.dogShelterService = dogShelterService;
         this.userService = userService;
         this.messageService = messageService;
-        this.volunteerBot = volunteerBot;
     }
 
 
@@ -80,12 +74,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                     dogUsersForSaving.remove(chatId);
                     catUsersForSaving.remove(chatId);
-                    break;
-                case "/stop":
-                    dialogueMode = false;
-                    volunteerBot.setDialogueMode(false);
-                    volunteerBot.sendMessage(volunteerChatId, "Пользователь завершил чат");
-                    sendMessage(chatId, "/start");
                     break;
                 default:
                     if (catUsersForSaving.containsKey(chatId)) {
@@ -128,8 +116,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                             userDAO.addDogUser(dogUsersForSaving.get(chatId));
                             dogUsersForSaving.remove(chatId);
                         }
-                    } else if (dialogueMode) {
-                        volunteerBot.sendMessage(volunteerChatId, update.getMessage().getText());
                     } else {
                         sendMessage(chatId, "ничего не понял");
                     }
@@ -318,15 +304,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 break;
 
             case "VOLUNTEER_CAT":
-               volunteerChatId = volunteerDAO.getAllVolunteers().get(1).getChatId(); //
-               dialogueMode = true;
-
-               sendMessage(chatId, "Ожидайте ответа волонтера");
-               volunteerBot.sendMessage(chatId, volunteerChatId, "Вас вызывает пользователь. Принять запрос?");
-
-
-                break;
-
 
             case "VOLUNTEER_DOG":
                 editMessage(chatId, callbackQueryMessageId, "!!!В РАЗРАБОТКЕ!!!", createButtons(1, new ArrayList<>(Arrays.asList(
