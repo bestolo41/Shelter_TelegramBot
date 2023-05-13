@@ -14,6 +14,11 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.List;
+/**
+ * Класс VolunteerBot представляет собой бота для работы с волонтерами.
+ * Отмечен аннотацией @Component для включения его в контекст приложения Spring.
+ * Наследует от TelegramLongPollingBot для работы с API Telegram.
+ */
 @Data
 @Component
 public class VolunteerBot extends TelegramLongPollingBot {
@@ -22,7 +27,13 @@ public class VolunteerBot extends TelegramLongPollingBot {
     private String userChatId;
     private boolean dialogueMode = false;
     private final TelegramBot telegramBot;
-
+    /**
+     * Конструктор класса VolunteerBot.
+     *
+     * @param telegramBotConfig конфигурация бота Telegram
+     * @param volunteerDAO объект DAO для работы с волонтерами
+     * @param telegramBot объект бота Telegram
+     */
     public VolunteerBot(TelegramBotConfig telegramBotConfig, VolunteerDAO volunteerDAO, TelegramBot telegramBot) {
         this.telegramBotConfig = telegramBotConfig;
         this.volunteerDAO = volunteerDAO;

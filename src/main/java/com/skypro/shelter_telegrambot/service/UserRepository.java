@@ -5,10 +5,17 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
+/**
+ * Класс UserRepository управляет сохранением объектов User в базу данных.
+ * Использует Hibernate для взаимодействия с базой данных.
+ */
 
 public class UserRepository {
     private static SessionFactory sessionFactory;
-
+    /**
+     * В статическом блоке инициализации настраивается фабрика сессий Hibernate
+     * с использованием файла конфигурации hibernate.cfg.xml.
+     */
     static {
         try {
             Configuration configuration = new Configuration();
@@ -19,6 +26,11 @@ public class UserRepository {
         }
     }
 
+    /**
+     * Метод saveUser сохраняет пользователя в базе данных.
+     *
+     * @param user Пользователь для сохранения в базе данных.
+     */
     public static void saveUser(User user) {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {

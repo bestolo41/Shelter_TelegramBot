@@ -9,8 +9,18 @@ import org.hibernate.Transaction;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+/**
+ * Класс реализации DAO для работы с волонтерами.
+ * Использует Hibernate для взаимодействия с базой данных.
+ */
 @Service
 public class VolunteerDAOImpl implements VolunteerDAO {
+    /**
+     * Добавляет нового волонтера в базу данных.
+     *
+     * @param newVolunteer новый волонтер.
+     */
     @Override
     public void addVolunteer(Volunteer newVolunteer) {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession();) {
@@ -20,6 +30,11 @@ public class VolunteerDAOImpl implements VolunteerDAO {
         }
     }
 
+    /**
+     * Возвращает список всех волонтеров из базы данных.
+     *
+     * @return список волонтеров.
+     */
     @Override
     public List<Volunteer> getAllVolunteers() {
         try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession();) {

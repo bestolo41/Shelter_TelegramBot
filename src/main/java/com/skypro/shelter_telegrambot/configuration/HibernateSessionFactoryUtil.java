@@ -8,11 +8,28 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 
-
+/**
+ * Класс HibernateSessionFactoryUtil предназначен для создания единственного экземпляра SessionFactory
+ * для работы с базой данных через Hibernate. Реализован по шаблону Singleton.
+ */
 public class HibernateSessionFactoryUtil {
+    /**
+     * Экземпляр SessionFactory
+     */
     private static SessionFactory sessionFactory;
 
-    private HibernateSessionFactoryUtil() {}
+    /**
+     * Приватный конструктор класса, который запрещает создание экземпляров данного класса извне.
+     */
+
+    private HibernateSessionFactoryUtil() {
+    }
+
+    /**
+     * Метод getSessionFactory для получения экземпляра SessionFactory.
+     *
+     * @return экземпляр SessionFactory. Если текущий экземпляр не существует, то происходит его создание.
+     */
 
     public static SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
