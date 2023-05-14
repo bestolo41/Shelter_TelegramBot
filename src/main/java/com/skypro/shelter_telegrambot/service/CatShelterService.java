@@ -1,7 +1,10 @@
 package com.skypro.shelter_telegrambot.service;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -11,8 +14,22 @@ import java.util.List;
 
 import static jdk.javadoc.internal.tool.Main.execute;
 
+/**
+ * Сервис, предоставляющий информацию о приюте для кошек.
+ */
 @Service
 public class CatShelterService {
+    // Добавьте экземпляр вашего бота
+    private final TelegramBot bot;
+
+    public CatShelterService(@Lazy TelegramBot bot) {
+        this.bot = bot;
+    }
+    /**
+     * Возвращает общую информацию о приюте.
+     *
+     * @return строка с общей информацией о приюте.
+     */
     public String getGeneralInfo() {
         return "Добро пожаловать в приют для кошек!\n\n"
                 + "Мы рады видеть вас в нашем приюте. Здесь вы можете познакомиться с кошками, "
@@ -20,6 +37,11 @@ public class CatShelterService {
                 + "усыновлению, а также обучению и реабилитации кошек.";
     }
 
+    /**
+     * Возвращает адрес приюта и схему проезда.
+     *
+     * @return строка с адресом и схемой проезда к приюту.
+     */
     public String getAddressAndDirections() {
         return "Адрес приюта для кошек: г.Казань ул. Ленина, 5\n\n" +
                 "Схема проезда: \n" +
@@ -32,6 +54,11 @@ public class CatShelterService {
                 "Воскресенье: выходной";
     }
 
+    /**
+     * Возвращает правила безопасности приюта.
+     *
+     * @return строка с правилами безопасности.
+     */
     public String getSafetyRules() {
         return "Правила пропуска и безопасности в приюте для кошек:\n\n" +
                 "1. Заполнить анкету посетителя при входе\n" +
@@ -39,32 +66,67 @@ public class CatShelterService {
                 "3. Соблюдать инструкции персонала приюта и правила поведения";
     }
 
+    /**
+     * Возвращает контактные данные охраны приюта.
+     *
+     * @return строка с контактами охраны.
+     */
     public String getSecurityContacts() {
         return "Контакты охраны приюта для кошек:\n\n" +
                 "Телефон: +7 (123) 456-78-90\n" +
                 "E-mail: security@catshelter.org";
     }
-        public void requestVolunteer(long chatId) {
-            SendMessage message = new SendMessage();
-            message.setChatId(String.valueOf(chatId));
-            message.setText("Пользователь нуждается в помощи волонтера!");
 
-            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-            List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+    /**
+     * Отправляет запрос на помощь волонтеру.
+     *
+     * @param userChatId идентификатор чата.
+     */
+    public void requestVolunteer(long userChatId) {
+        // Замените GROUP_CHAT_ID на идентификатор чата вашей группы
+//        String groupChatId = "GROUP_CHAT_ID";
+        String groupChatId = "-1001972925833";
 
-            InlineKeyboardButton volunteerButton = new InlineKeyboardButton();
-            volunteerButton.setText("Помочь пользователю");
-            volunteerButton.setUrl("https://t.me/Digital20_group"); // Замените на ссылку вашей группы
+        // Получите username пользователя
+        String username = getUsername(userChatId);
 
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(volunteerButton);
+        SendMessage message = new SendMessage();
+        message.setChatId(groupChatId);
+        message.setText("Пользователь (@" + username + ") нуждается в помощи волонтера!");
 
-            keyboard.add(row);
-            inlineKeyboardMarkup.setKeyboard(keyboard);
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-            message.setReplyMarkup(inlineKeyboardMarkup);
+        InlineKeyboardButton volunteerButton = new InlineKeyboardButton();
+        volunteerButton.setText("Помочь пользователю");
+        volunteerButton.setUrl("https://t.me/" + username); // Замените на ссылку на чат пользователя
 
-            execute(String.valueOf(message)); // отправка сообщения с помощью TelegramBotsApi
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(volunteerButton);
+
+        keyboard.add(row);
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        try {
+            bot.execute(message); // отправка сообщения с помощью экземпляра Telegram-бота
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
+    private String getUsername(long userChatId) {
+        GetChat getChat = new GetChat();
+        getChat.setChatId(String.valueOf(userChatId));
+
+        try {
+            Chat chat = bot.execute(getChat);
+            String username = chat.getUserName();
+            return username;
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}
 

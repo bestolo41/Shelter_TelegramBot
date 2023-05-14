@@ -11,19 +11,29 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
+
+/**
+ * Класс UserService обеспечивает сервисные функции для работы с пользователями.
+ * Отмечен аннотацией @Service, что позволяет Spring включить его в контекст приложения.
+ */
 @Service
 public class UserService {
     final UserDAO userDAO;
 
+    /**
+     * Конструктор класса UserService.
+     *
+     * @param userDAO объект DAO для работы с пользователями
+     */
     public UserService(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
     /**
-     * Проверяет пользовался ли ботом этот пользователь или нет
+     * Метод checkUser проверяет, использовал ли пользователь уже бота или нет.
      *
-     * @param userId
-     * @return
+     * @param userId Идентификатор пользователя
+     * @return true, если пользователь использовал бота; false в противном случае
      */
     public boolean checkUser(long userId) {
         User u = new User();
@@ -33,6 +43,12 @@ public class UserService {
         return users.contains(u);
     }
 
+    /**
+     * Метод checkCatUser проверяет, является ли пользователь пользователем приюта для кошек.
+     *
+     * @param userId Идентификатор пользователя
+     * @return true, если пользователь является пользователем приюта для кошек; false в противном случае
+     */
     public boolean checkCatUser(long userId) {
         CatShelterUser u = new CatShelterUser();
         u.setId(userId);
@@ -41,6 +57,12 @@ public class UserService {
         return users.contains(u);
     }
 
+    /**
+     * Метод checkDogUser проверяет, является ли пользователь пользователем приюта для собак.
+     *
+     * @param userId Идентификатор пользователя
+     * @return true, если пользователь является пользователем приюта для собак; false в противном случае
+     */
     public boolean checkDogUser(long userId) {
         DogShelterUser u = new DogShelterUser();
         u.setId(userId);
