@@ -23,14 +23,4 @@ public class TelegramBotConfig {
      */
     @Value("${bot.token}")
     String token;
-    /**
-     * Имя волонтерского бота.
-     */
-    @Value("${volunteerBot.name}")
-    String VolunteerBotName;
-    /**
-     * Токен волонтерского бота.
-     */
-    @Value("${volunteerBot.token}")
-    String VolunteerBotToken;
 }
