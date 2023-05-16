@@ -84,7 +84,8 @@ public class VolunteerService {
                     .max(Comparator.comparing(PhotoSize::getFileSize)).orElse(null);
             String fileId = photo.getFileId();
             String userName = update.getMessage().getFrom().getUserName();
-            Long chatId = update.getMessage().getChatId();
+            Long userChatId = update.getMessage().getChatId();
+
 
             try {
                 messageService.sendMessage(Long.parseLong(groupChatId), "Пользователь (@" + userName + ") направил отчет о питомце");
@@ -94,10 +95,10 @@ public class VolunteerService {
                         .caption(update.getMessage().getCaption())
                         .photo(new InputFile(fileId))
                                 .replyMarkup(messageService.createButtons(2, new ArrayList<>(Arrays.asList(
-                                        new Button("Принять отчет", "ACCEPT_REPORT"),
-                                        new Button("Отклонить", "REJECT_REPORT")))))
+                                        new Button("Принять отчет", "ACCEPT_REPORT/" + userChatId),
+                                        new Button("Отклонить", "REJECT_REPORT/" + userChatId)))))
                         .build());
-                messageService.sendMessage(chatId, "Отчет отправлен, ожидайте ответа волонтёра", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                messageService.sendMessage(userChatId, "Отчет отправлен, ожидайте ответа волонтёра", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                         new Button("Назад", "MAIN_MENU")))));
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
