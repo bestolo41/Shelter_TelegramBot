@@ -137,5 +137,8 @@ public class UserDAOImpl implements UserDAO {
             session.delete(user);
             transaction.commit();
         }
+
     }
+
 }
+
