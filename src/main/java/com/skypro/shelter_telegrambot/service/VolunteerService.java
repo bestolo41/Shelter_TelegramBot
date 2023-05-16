@@ -17,7 +17,7 @@ import java.util.List;
 
 @Service
 public class VolunteerService {
-    private String groupChatId = "1807709894";
+    private String groupChatId = "-1001972925833";
     private final TelegramBot bot;
     private final MessageService messageService;
 
