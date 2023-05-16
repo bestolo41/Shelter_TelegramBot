@@ -76,57 +76,5 @@ public class CatShelterService {
                 "Телефон: +7 (123) 456-78-90\n" +
                 "E-mail: security@catshelter.org";
     }
-
-    /**
-     * Отправляет запрос на помощь волонтеру.
-     *
-     * @param userChatId идентификатор чата.
-     */
-    public void requestVolunteer(long userChatId) {
-        // Замените GROUP_CHAT_ID на идентификатор чата вашей группы
-//        String groupChatId = "GROUP_CHAT_ID";
-        String groupChatId = "-1001972925833";
-
-        // Получите username пользователя
-        String username = getUsername(userChatId);
-
-        SendMessage message = new SendMessage();
-        message.setChatId(groupChatId);
-        message.setText("Пользователь (@" + username + ") нуждается в помощи волонтера!");
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        InlineKeyboardButton volunteerButton = new InlineKeyboardButton();
-        volunteerButton.setText("Помочь пользователю");
-        volunteerButton.setUrl("https://t.me/" + username); // Замените на ссылку на чат пользователя
-
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        row.add(volunteerButton);
-
-        keyboard.add(row);
-        inlineKeyboardMarkup.setKeyboard(keyboard);
-
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            bot.execute(message); // отправка сообщения с помощью экземпляра Telegram-бота
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-    private String getUsername(long userChatId) {
-        GetChat getChat = new GetChat();
-        getChat.setChatId(String.valueOf(userChatId));
-
-        try {
-            Chat chat = bot.execute(getChat);
-            String username = chat.getUserName();
-            return username;
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 }
 
