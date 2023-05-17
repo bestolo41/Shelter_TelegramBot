@@ -1,6 +1,7 @@
 package com.skypro.shelter_telegrambot.service;
 
 import com.skypro.shelter_telegrambot.model.Button;
+import com.skypro.shelter_telegrambot.model.Volunteer;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -20,10 +21,12 @@ public class VolunteerService {
     private String groupChatId = "-1001972925833";
     private final TelegramBot bot;
     private final MessageService messageService;
+    private final VolunteerDAO volunteerDAO;
 
-    public VolunteerService(TelegramBot telegramBot, MessageService messageService) {
+    public VolunteerService(TelegramBot telegramBot, MessageService messageService, VolunteerDAO volunteerDAO) {
         this.bot = telegramBot;
         this.messageService = messageService;
+        this.volunteerDAO = volunteerDAO;
     }
 
     /**
@@ -84,7 +87,8 @@ public class VolunteerService {
                     .max(Comparator.comparing(PhotoSize::getFileSize)).orElse(null);
             String fileId = photo.getFileId();
             String userName = update.getMessage().getFrom().getUserName();
-            Long chatId = update.getMessage().getChatId();
+            Long userChatId = update.getMessage().getChatId();
+
 
             try {
                 messageService.sendMessage(Long.parseLong(groupChatId), "Пользователь (@" + userName + ") направил отчет о питомце");
@@ -94,10 +98,10 @@ public class VolunteerService {
                         .caption(update.getMessage().getCaption())
                         .photo(new InputFile(fileId))
                                 .replyMarkup(messageService.createButtons(2, new ArrayList<>(Arrays.asList(
-                                        new Button("Принять отчет", "ACCEPT_REPORT"),
-                                        new Button("Отклонить", "REJECT_REPORT")))))
+                                        new Button("Принять отчет", "ACCEPT_REPORT/" + userChatId),
+                                        new Button("Отклонить", "REJECT_REPORT/" + userChatId)))))
                         .build());
-                messageService.sendMessage(chatId, "Отчет отправлен, ожидайте ответа волонтёра", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                messageService.sendMessage(userChatId, "Отчет отправлен, ожидайте ответа волонтёра", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                         new Button("Назад", "MAIN_MENU")))));
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
@@ -110,7 +114,13 @@ public class VolunteerService {
                     messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Назад", "MAIN_MENU")))));
         }
+    }
 
+    public boolean checkVolunteer(Long chatId) {
+        Volunteer volunteer = new Volunteer();
+        volunteer.setId(chatId);
+        ArrayList<Volunteer> volunteers = (ArrayList<Volunteer>) volunteerDAO.getAllVolunteers();
 
+        return volunteers.contains(volunteer);
     }
 }

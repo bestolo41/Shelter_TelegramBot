@@ -5,6 +5,7 @@ import com.skypro.shelter_telegrambot.model.Button;
 import com.skypro.shelter_telegrambot.model.CatShelterUser;
 import com.skypro.shelter_telegrambot.model.DogShelterUser;
 
+import com.skypro.shelter_telegrambot.model.Volunteer;
 import lombok.Data;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final UserService userService;
     private final MessageService messageService;
     private final VolunteerService volunteerService;
+    private final VolunteerDAO volunteerDAO;
 
     /**
      * Конструктор TelegramBot.
@@ -48,10 +50,11 @@ public class TelegramBot extends TelegramLongPollingBot {
      * @param dogShelterService Сервис для работы с приютами для собак.
      * @param userService       Сервис для работы с пользователями.
      * @param messageService    Сервис для обработки сообщений.
-     * @param volunteerService
+     * @param volunteerService  Сервис для взаимодействия пользователей с волонтером.
+     * @param volunteerDAO      DAO для работы с волонтерами.
      */
     @Lazy
-    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService, DogShelterService dogShelterService, UserService userService, MessageService messageService, VolunteerService volunteerService) {
+    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService, DogShelterService dogShelterService, UserService userService, MessageService messageService, VolunteerService volunteerService, VolunteerDAO volunteerDAO) {
         this.telegramBotConfig = telegramBotConfig;
         this.userDAO = userDAO;
         this.infoService = infoService;
@@ -60,6 +63,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.userService = userService;
         this.messageService = messageService;
         this.volunteerService = volunteerService;
+        this.volunteerDAO = volunteerDAO;
     }
 
     /**
@@ -100,6 +104,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                     messageService.startCommandReceived(chatId, update.getMessage().getChat().getFirstName(), update);
                     dogUsersForSaving.remove(chatId);
                     catUsersForSaving.remove(chatId);
+                    break;
+
+                    //команда для волонтеров
+                case "/*volunteer_mode*":
+                    messageService.sendMessage(chatId, "Выберите действия:",
+                            messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                    new Button("Стать волонтёром", "BECOME_A_VOLUNTEER"),
+                                    new Button("Добавить усыновителя", "ADD_NEW_PARENT")
+                            ))));
                     break;
 
                 //Обработка других сообщений
@@ -174,282 +187,310 @@ public class TelegramBot extends TelegramLongPollingBot {
                 volunteerService.processUserReport(update);
 
             }
-        }
+        } else if (update.hasCallbackQuery())
 
 
-        else if (update.hasCallbackQuery())
+        // Обработка коллбэк-запроса
+        // ...
+        {
+            String callbackData = update.getCallbackQuery().getData();
+            String trueCallbackData;
+            long userChatId = 0;
+            long callbackQueryMessageId = update.getCallbackQuery().getMessage().getMessageId();
+            long chatId = update.getCallbackQuery().getMessage().getChatId();
+            if (callbackData.contains("/")) {
+                String[] splitCallbackData = callbackData.split("/");
+                trueCallbackData = splitCallbackData[0];
+                userChatId = Long.parseLong(splitCallbackData[1]);
+            } else {
+                trueCallbackData = callbackData;
+            }
 
+            switch (trueCallbackData) {
+                case "MAIN_MENU":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Выбери какой приют тебя интересует:", messageService.createButtons(2, new ArrayList<>(Arrays.asList(
+                            new Button("Приют для кошек", "CAT_SHELTER"),
+                            new Button("Приют для собак", "DOG_SHELTER")))));
+                    catUsersToSendTheReport.remove(chatId);
+                    dogUsersToSendTheReport.remove(chatId);
+                    break;
 
-                // Обработка коллбэк-запроса
-            // ...
-            {
-                String callbackData = update.getCallbackQuery().getData();
-                long callbackQueryMessageId = update.getCallbackQuery().getMessage().getMessageId();
-                long chatId = update.getCallbackQuery().getMessage().getChatId();
+                case "BACK_GENERAL_CAT":
 
-                switch (callbackData) {
-                    case "MAIN_MENU":
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Выбери какой приют тебя интересует:", messageService.createButtons(2, new ArrayList<>(Arrays.asList(
-                                new Button("Приют для кошек", "CAT_SHELTER"),
-                                new Button("Приют для собак", "DOG_SHELTER")))));
-                        catUsersToSendTheReport.remove(chatId);
-                        dogUsersToSendTheReport.remove(chatId);
-                        break;
+                case "CAT_SHELTER":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Выберите действие для приюта для кошек:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Узнать информацию о приюте", "INFO_CAT"),
+                            new Button("Как взять кошку из приюта", "HOW_CAT"),
+                            new Button("Прислать отчет о питомце", "REPORT_CAT"),
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT"),
+                            new Button("Главное меню", "MAIN_MENU")))));
+                    catUsersToSendTheReport.remove(chatId);
+                    break;
 
-                    case "BACK_GENERAL_CAT":
+                case "BACK_GENERAL_DOG":
 
-                    case "CAT_SHELTER":
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Выберите действие для приюта для кошек:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Узнать информацию о приюте", "INFO_CAT"),
-                                new Button("Как взять кошку из приюта", "HOW_CAT"),
-                                new Button("Прислать отчет о питомце", "REPORT_CAT"),
-                                new Button("Позвать волонтера", "VOLUNTEER_CAT"),
-                                new Button("Главное меню", "MAIN_MENU")))));
-                        catUsersToSendTheReport.remove(chatId);
-                        break;
+                case "DOG_SHELTER":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Выберите действие для приюта для собак:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Узнать информацию о приюте", "INFO_DOG"),
+                            new Button("Как взять собаку из приюта", "HOW_DOG"),
+                            new Button("Прислать отчет о питомце", "REPORT_DOG"),
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG"),
+                            new Button("Главное меню", "MAIN_MENU")))));
+                    dogUsersToSendTheReport.remove(chatId);
+                    break;
 
-                    case "BACK_GENERAL_DOG":
+                case "BACK_INFO_CAT":
 
-                    case "DOG_SHELTER":
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Выберите действие для приюта для собак:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Узнать информацию о приюте", "INFO_DOG"),
-                                new Button("Как взять собаку из приюта", "HOW_DOG"),
-                                new Button("Прислать отчет о питомце", "REPORT_DOG"),
-                                new Button("Позвать волонтера", "VOLUNTEER_DOG"),
-                                new Button("Главное меню", "MAIN_MENU")))));
-                        dogUsersToSendTheReport.remove(chatId);
-                        break;
+                case "INFO_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Какую информацию хотите узнать о приюте для кошек?", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Общая информация о приюте", "GEN_INFO_CAT"),
+                            new Button("График, адрес и схема проезда", "TIME_ADDRESS_DIRECTION_CAT"),
+                            new Button("Контакты охраны", "SECURITY_CAT"),
+                            new Button("Техника безопасности", "SAFETY_CAT"),
+                            new Button("Оставить контакты", "SET_CONTACT_CAT"),
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT"),
+                            new Button("Назад", "BACK_GENERAL_CAT")))));
+                    break;
 
-                    case "BACK_INFO_CAT":
+                case "BACK_INFO_DOG":
 
-                    case "INFO_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Какую информацию хотите узнать о приюте для кошек?", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Общая информация о приюте", "GEN_INFO_CAT"),
-                                new Button("График, адрес и схема проезда", "TIME_ADDRESS_DIRECTION_CAT"),
-                                new Button("Контакты охраны", "SECURITY_CAT"),
-                                new Button("Техника безопасности", "SAFETY_CAT"),
-                                new Button("Оставить контакты", "SET_CONTACT_CAT"),
-                                new Button("Позвать волонтера", "VOLUNTEER_CAT"),
-                                new Button("Назад", "BACK_GENERAL_CAT")))));
-                        break;
+                case "INFO_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Какую информацию хотите узнать о приюте для собак?", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Общая информация о приюте", "GEN_INFO_DOG"),
+                            new Button("График, адрес и схема проезда", "TIME_ADDRESS_DIRECTION_DOG"),
+                            new Button("Контакты охраны", "SECURITY_DOG"),
+                            new Button("Техника безопасности", "SAFETY_DOG"),
+                            new Button("Оставить контакты", "SET_CONTACT_DOG"),
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG"),
+                            new Button("Назад", "BACK_GENERAL_DOG")))));
+                    break;
 
-                    case "BACK_INFO_DOG":
+                case "BACK_HOW_CAT":
 
-                    case "INFO_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Какую информацию хотите узнать о приюте для собак?", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Общая информация о приюте", "GEN_INFO_DOG"),
-                                new Button("График, адрес и схема проезда", "TIME_ADDRESS_DIRECTION_DOG"),
-                                new Button("Контакты охраны", "SECURITY_DOG"),
-                                new Button("Техника безопасности", "SAFETY_DOG"),
-                                new Button("Оставить контакты", "SET_CONTACT_DOG"),
-                                new Button("Позвать волонтера", "VOLUNTEER_DOG"),
-                                new Button("Назад", "BACK_GENERAL_DOG")))));
-                        break;
+                case "HOW_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Информация для получения кошки из приюта:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Правила знакомства", "DATING_RULES_CAT"),
+                            new Button("Необходимые документы", "DOCS_CAT"),
+                            new Button("Рекомендации по транспортировке кошки", "TRANSPORTING_CAT"),
+                            new Button("Рекомендации по обустройству дома для котенка", "HOME_LITTLE_CAT"),
+                            new Button("Рекомендации по обустройству дома для взрослого кота", "HOME_ADULT_CAT"),
+                            new Button("Рекомендации по обустройству дома для кота с ограниченными возможностями", "HOME_INVALID_CAT"),
+                            new Button("Причины для отказа", "REASONS_CAT"),
+                            new Button("Оставить контакты", "SET_CONTACT_CAT"),
+                            new Button("Позвать волонтера", "VOLUNTEER_CAT"),
+                            new Button("Назад", "BACK_GENERAL_CAT")))));
+                    break;
 
-                    case "BACK_HOW_CAT":
+                case "BACK_HOW_DOG":
 
-                    case "HOW_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Информация для получения кошки из приюта:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Правила знакомства", "DATING_RULES_CAT"),
-                                new Button("Необходимые документы", "DOCS_CAT"),
-                                new Button("Рекомендации по транспортировке кошки", "TRANSPORTING_CAT"),
-                                new Button("Рекомендации по обустройству дома для котенка", "HOME_LITTLE_CAT"),
-                                new Button("Рекомендации по обустройству дома для взрослого кота", "HOME_ADULT_CAT"),
-                                new Button("Рекомендации по обустройству дома для кота с ограниченными возможностями", "HOME_INVALID_CAT"),
-                                new Button("Причины для отказа", "REASONS_CAT"),
-                                new Button("Оставить контакты", "SET_CONTACT_CAT"),
-                                new Button("Позвать волонтера", "VOLUNTEER_CAT"),
-                                new Button("Назад", "BACK_GENERAL_CAT")))));
-                        break;
+                case "HOW_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Информация для получения собаки из приюта:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Правила знакомства", "DATING_RULES_DOG"),
+                            new Button("Необходимые документы", "DOCS_DOG"),
+                            new Button("Рекомендации по транспортировке собаки", "TRANSPORTING_DOG"),
+                            new Button("Рекомендации по обустройству дома для щенка", "HOME_LITTLE_DOG"),
+                            new Button("Рекомендации по обустройству дома для взрослой собаки", "HOME_ADULT_DOG"),
+                            new Button("Рекомендации по обустройству дома для собаки с ограниченными возможностями", "HOME_INVALID_DOG"),
+                            new Button("Причины для отказа", "REASONS_DOG"),
+                            new Button("Советы кинолога по первичному общению с собакой", "PRIMARY_RECOMMENDATION"),
+                            new Button("Рекомендованные кинологи", "PROVEN_DOG_HANDLER_RECOMMENDATION"),
+                            new Button("Оставить контакты", "SET_CONTACT_DOG"),
+                            new Button("Позвать волонтера", "VOLUNTEER_DOG"),
+                            new Button("Назад", "BACK_GENERAL_DOG")))));
+                    break;
 
-                    case "BACK_HOW_DOG":
+                case "DATING_RULES_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDatingRules(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
 
-                    case "HOW_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Информация для получения собаки из приюта:", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Правила знакомства", "DATING_RULES_DOG"),
-                                new Button("Необходимые документы", "DOCS_DOG"),
-                                new Button("Рекомендации по транспортировке собаки", "TRANSPORTING_DOG"),
-                                new Button("Рекомендации по обустройству дома для щенка", "HOME_LITTLE_DOG"),
-                                new Button("Рекомендации по обустройству дома для взрослой собаки", "HOME_ADULT_DOG"),
-                                new Button("Рекомендации по обустройству дома для собаки с ограниченными возможностями", "HOME_INVALID_DOG"),
-                                new Button("Причины для отказа", "REASONS_DOG"),
-                                new Button("Советы кинолога по первичному общению с собакой", "PRIMARY_RECOMMENDATION"),
-                                new Button("Рекомендованные кинологи", "PROVEN_DOG_HANDLER_RECOMMENDATION"),
-                                new Button("Оставить контакты", "SET_CONTACT_DOG"),
-                                new Button("Позвать волонтера", "VOLUNTEER_DOG"),
-                                new Button("Назад", "BACK_GENERAL_DOG")))));
-                        break;
+                case "DATING_RULES_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDatingRules(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "DATING_RULES_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDatingRules(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_CAT")))));
-                        break;
+                case "GEN_INFO_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getGeneralInfo(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
 
-                    case "DATING_RULES_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDatingRules(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
+                case "GEN_INFO_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getGeneralInfo(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
 
-                    case "GEN_INFO_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getGeneralInfo(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                case "TIME_ADDRESS_DIRECTION_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getAddressAndDirections(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "TIME_ADDRESS_DIRECTION_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getAddressAndDirections(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
+                case "SECURITY_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getSecurityContacts(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "SECURITY_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getSecurityContacts(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
+                case "SAFETY_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getSafetyRules(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
+
+                case "SAFETY_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getSafetyRules(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
+
+                case "SET_CONTACT_CAT":
+                    if (userService.checkCatUser(update.getCallbackQuery().getFrom().getId())) {
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Контакт уже сохранен", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                                 new Button("Назад", "BACK_INFO_CAT")))));
                         break;
+                    }
+                    catUsersForSaving.put(chatId, new CatShelterUser(chatId));
+                    messageService.deleteMessage(chatId, callbackQueryMessageId);
+                    messageService.sendMessage(chatId, "Введите имя и фамилию:");
+                    break;
 
-                    case "GEN_INFO_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getGeneralInfo(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                case "SET_CONTACT_DOG":
+                    if (userService.checkDogUser(update.getCallbackQuery().getFrom().getId())) {
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Контакт уже сохранен", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                                 new Button("Назад", "BACK_INFO_DOG")))));
                         break;
+                    }
+                    dogUsersForSaving.put(chatId, new DogShelterUser());
+                    messageService.deleteMessage(chatId, callbackQueryMessageId);
+                    messageService.sendMessage(chatId, "Введите имя и фамилию:");
+                    break;
 
-                    case "TIME_ADDRESS_DIRECTION_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getAddressAndDirections(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_CAT")))));
-                        break;
+                case "REPORT_CAT":
+                    catUsersToSendTheReport.put(chatId, new CatShelterUser());
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
+                            messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                    new Button("Назад", "BACK_GENERAL_CAT")))));
+                    break;
+                case "REPORT_DOG":
+                    dogUsersToSendTheReport.put(chatId, new DogShelterUser());
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
+                            messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                    new Button("Назад", "BACK_GENERAL_DOG")))));
+                    break;
 
-                    case "TIME_ADDRESS_DIRECTION_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getAddressAndDirections(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_DOG")))));
-                        break;
+                case "VOLUNTEER_CAT":
+                    volunteerService.requestVolunteer(chatId);
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Волонетёр напишет Вам в ближайшее время", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_CAT")))));
+                    break;
 
-                    case "SECURITY_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getSecurityContacts(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_CAT")))));
-                        break;
+                case "VOLUNTEER_DOG":
+                    volunteerService.requestVolunteer(chatId);
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Волонетёр напишет Вам в ближайшее время", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_INFO_DOG")))));
+                    break;
 
-                    case "SECURITY_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getSecurityContacts(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_DOG")))));
-                        break;
+                case "DOCS_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDocuments(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
+                case "DOCS_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDocuments(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "SAFETY_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, catShelterService.getSafetyRules(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_CAT")))));
-                        break;
+                case "TRANSPORTING_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationForTransportingAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
 
-                    case "SAFETY_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, dogShelterService.getSafetyRules(), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_DOG")))));
-                        break;
+                case "TRANSPORTING_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationForTransportingAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "SET_CONTACT_CAT":
-                        if (userService.checkCatUser(update.getCallbackQuery().getFrom().getId())) {
-                            messageService.editMessage(chatId, callbackQueryMessageId, "Контакт уже сохранен", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                    new Button("Назад", "BACK_INFO_CAT")))));
-                            break;
-                        }
-                        catUsersForSaving.put(chatId, new CatShelterUser(chatId));
-                        messageService.deleteMessage(chatId, callbackQueryMessageId);
-                        messageService.sendMessage(chatId, "Введите имя и фамилию:");
-                        break;
+                case "HOME_LITTLE_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForLittleAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
 
-                    case "SET_CONTACT_DOG":
-                        if (userService.checkDogUser(update.getCallbackQuery().getFrom().getId())) {
-                            messageService.editMessage(chatId, callbackQueryMessageId, "Контакт уже сохранен", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                    new Button("Назад", "BACK_INFO_DOG")))));
-                            break;
-                        }
-                        dogUsersForSaving.put(chatId, new DogShelterUser());
-                        messageService.deleteMessage(chatId, callbackQueryMessageId);
-                        messageService.sendMessage(chatId, "Введите имя и фамилию:");
-                        break;
+                case "HOME_LITTLE_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForLittleAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "REPORT_CAT":
-                        catUsersToSendTheReport.put(chatId, new CatShelterUser());
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
-                                messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                        new Button("Назад", "BACK_GENERAL_CAT")))));
-                        break;
-                    case "REPORT_DOG":
-                        dogUsersToSendTheReport.put(chatId, new DogShelterUser());
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
-                                messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                        new Button("Назад", "BACK_GENERAL_DOG")))));
-                        break;
+                case "HOME_ADULT_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForAdultAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
 
-                    case "VOLUNTEER_CAT":
-                        volunteerService.requestVolunteer(chatId);
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Волонетёр напишет Вам в ближайшее время", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_CAT")))));
-                        break;
+                case "HOME_ADULT_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForAdultAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "VOLUNTEER_DOG":
-                        volunteerService.requestVolunteer(chatId);
-                        messageService.editMessage(chatId, callbackQueryMessageId, "Волонетёр напишет Вам в ближайшее время", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_INFO_DOG")))));
-                        break;
+                case "HOME_INVALID_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForDisabilityAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
 
-                    case "DOCS_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDocuments(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_CAT")))));
-                        break;
-                    case "DOCS_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getDocuments(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
+                case "HOME_INVALID_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForDisabilityAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "TRANSPORTING_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationForTransportingAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_CAT")))));
-                        break;
+                case "REASONS_CAT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getListOfReason(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_CAT")))));
+                    break;
 
-                    case "TRANSPORTING_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationForTransportingAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
+                case "REASONS_DOG":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getListOfReason(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "HOME_LITTLE_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForLittleAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_CAT")))));
-                        break;
+                case "PRIMARY_RECOMMENDATION":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getPrimaryRecommendationDogHandler(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "HOME_LITTLE_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForLittleAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
+                case "PROVEN_DOG_HANDLER_RECOMMENDATION":
+                    messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationProvenDogHandler(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Назад", "BACK_HOW_DOG")))));
+                    break;
 
-                    case "HOME_ADULT_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForAdultAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_CAT")))));
-                        break;
+                case "ACCEPT_REPORT":
+                    messageService.sendMessage(userChatId, "Отчет принят волонтером");
+                    break;
 
-                    case "HOME_ADULT_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForAdultAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
+                case "REJECT_REPORT":
+                    messageService.sendMessage(userChatId, "Дорогой усыновитель, мы заметили, что ты заполняешь отчет не так подробно, как необходимо. " +
+                            "Пожалуйста, подойди ответственнее к этому занятию. " +
+                            "В противном случае волонтеры приюта будут обязаны самолично проверять условия содержания животного");
+                    break;
+                default:
+                    messageService.sendMessage(chatId, "Извини, я не понял");
+                    break;
 
-                    case "HOME_INVALID_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForDisabilityAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_CAT")))));
-                        break;
+                case "BECOME_A_VOLUNTEER":
+                    if (volunteerService.checkVolunteer(chatId)) {
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Вы уже являетесь волонтером");
+                    } else {
+                        Volunteer volunteer = new Volunteer(
+                                chatId,
+                                update.getCallbackQuery().getFrom().getFirstName() + " " + update.getCallbackQuery().getFrom().getLastName(),
+                                chatId);
+                        volunteerDAO.addVolunteer(volunteer);
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Поздравляем! Вы теперь волонтер");
+                    }
 
-                    case "HOME_INVALID_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationHomeImprovementForDisabilityAnimal(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
-
-                    case "REASONS_CAT":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getListOfReason(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_CAT")))));
-                        break;
-
-                    case "REASONS_DOG":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getListOfReason(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
-
-                    case "PRIMARY_RECOMMENDATION":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getPrimaryRecommendationDogHandler(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
-
-                    case "PROVEN_DOG_HANDLER_RECOMMENDATION":
-                        messageService.editMessage(chatId, callbackQueryMessageId, infoService.getRecommendationProvenDogHandler(callbackData), messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                new Button("Назад", "BACK_HOW_DOG")))));
-                        break;
-
-                    default:
-                        messageService.sendMessage(chatId, "Извини, я не понял");
-                        break;
-                }
             }
         }
     }
+}
