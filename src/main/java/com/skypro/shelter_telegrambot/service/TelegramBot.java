@@ -5,6 +5,7 @@ import com.skypro.shelter_telegrambot.model.Button;
 import com.skypro.shelter_telegrambot.model.CatShelterUser;
 import com.skypro.shelter_telegrambot.model.DogShelterUser;
 
+import com.skypro.shelter_telegrambot.model.Volunteer;
 import lombok.Data;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final UserService userService;
     private final MessageService messageService;
     private final VolunteerService volunteerService;
+    private final VolunteerDAO volunteerDAO;
 
     /**
      * Конструктор TelegramBot.
@@ -48,10 +50,11 @@ public class TelegramBot extends TelegramLongPollingBot {
      * @param dogShelterService Сервис для работы с приютами для собак.
      * @param userService       Сервис для работы с пользователями.
      * @param messageService    Сервис для обработки сообщений.
-     * @param volunteerService
+     * @param volunteerService  Сервис для взаимодействия пользователей с волонтером.
+     * @param volunteerDAO      DAO для работы с волонтерами.
      */
     @Lazy
-    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService, DogShelterService dogShelterService, UserService userService, MessageService messageService, VolunteerService volunteerService) {
+    public TelegramBot(TelegramBotConfig telegramBotConfig, UserDAO userDAO, InfoService infoService, CatShelterService catShelterService, DogShelterService dogShelterService, UserService userService, MessageService messageService, VolunteerService volunteerService, VolunteerDAO volunteerDAO) {
         this.telegramBotConfig = telegramBotConfig;
         this.userDAO = userDAO;
         this.infoService = infoService;
@@ -60,6 +63,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.userService = userService;
         this.messageService = messageService;
         this.volunteerService = volunteerService;
+        this.volunteerDAO = volunteerDAO;
     }
 
     /**
@@ -100,6 +104,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                     messageService.startCommandReceived(chatId, update.getMessage().getChat().getFirstName(), update);
                     dogUsersForSaving.remove(chatId);
                     catUsersForSaving.remove(chatId);
+                    break;
+
+                    //команда для волонтеров
+                case "/*volunteer_mode*":
+                    messageService.sendMessage(chatId, "Выберите действия:",
+                            messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                    new Button("Стать волонтёром", "BECOME_A_VOLUNTEER"),
+                                    new Button("Добавить усыновителя", "ADD_NEW_PARENT")
+                            ))));
                     break;
 
                 //Обработка других сообщений
@@ -464,6 +477,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                 default:
                     messageService.sendMessage(chatId, "Извини, я не понял");
                     break;
+
+                case "BECOME_A_VOLUNTEER":
+                    if (volunteerService.checkVolunteer(chatId)) {
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Вы уже являетесь волонтером");
+                    } else {
+                        Volunteer volunteer = new Volunteer(
+                                chatId,
+                                update.getCallbackQuery().getFrom().getFirstName() + " " + update.getCallbackQuery().getFrom().getLastName(),
+                                chatId);
+                        volunteerDAO.addVolunteer(volunteer);
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Поздравляем! Вы теперь волонтер");
+                    }
+
             }
         }
     }

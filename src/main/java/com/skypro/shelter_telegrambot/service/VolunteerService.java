@@ -1,6 +1,7 @@
 package com.skypro.shelter_telegrambot.service;
 
 import com.skypro.shelter_telegrambot.model.Button;
+import com.skypro.shelter_telegrambot.model.Volunteer;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -20,10 +21,12 @@ public class VolunteerService {
     private String groupChatId = "1807709894";
     private final TelegramBot bot;
     private final MessageService messageService;
+    private final VolunteerDAO volunteerDAO;
 
-    public VolunteerService(TelegramBot telegramBot, MessageService messageService) {
+    public VolunteerService(TelegramBot telegramBot, MessageService messageService, VolunteerDAO volunteerDAO) {
         this.bot = telegramBot;
         this.messageService = messageService;
+        this.volunteerDAO = volunteerDAO;
     }
 
     /**
@@ -111,7 +114,13 @@ public class VolunteerService {
                     messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                             new Button("Назад", "MAIN_MENU")))));
         }
+    }
 
+    public boolean checkVolunteer(Long chatId) {
+        Volunteer volunteer = new Volunteer();
+        volunteer.setId(chatId);
+        ArrayList<Volunteer> volunteers = (ArrayList<Volunteer>) volunteerDAO.getAllVolunteers();
 
+        return volunteers.contains(volunteer);
     }
 }
