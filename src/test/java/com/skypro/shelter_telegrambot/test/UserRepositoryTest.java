@@ -12,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 
 import static org.mockito.Mockito.*;
 
+
 public class UserRepositoryTest {
 
     @Mock
