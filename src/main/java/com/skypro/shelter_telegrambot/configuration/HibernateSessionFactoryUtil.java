@@ -1,8 +1,8 @@
 package com.skypro.shelter_telegrambot.configuration;
 
+import com.skypro.shelter_telegrambot.model.AppUser;
 import com.skypro.shelter_telegrambot.model.CatShelterUser;
 import com.skypro.shelter_telegrambot.model.DogShelterUser;
-import com.skypro.shelter_telegrambot.model.User;
 import com.skypro.shelter_telegrambot.model.Volunteer;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -35,7 +35,7 @@ public class HibernateSessionFactoryUtil {
         if (sessionFactory == null) {
             try {
                 Configuration configuration = new Configuration().configure();
-                configuration.addAnnotatedClass(User.class);
+                configuration.addAnnotatedClass(AppUser.class);
                 configuration.addAnnotatedClass(CatShelterUser.class);
                 configuration.addAnnotatedClass(DogShelterUser.class);
                 configuration.addAnnotatedClass(Volunteer.class);

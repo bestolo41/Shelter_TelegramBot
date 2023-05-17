@@ -1,7 +1,7 @@
 package com.skypro.shelter_telegrambot.service;
 
+import com.skypro.shelter_telegrambot.model.AppUser;
 import com.skypro.shelter_telegrambot.model.Button;
-import com.skypro.shelter_telegrambot.model.User;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -57,7 +57,8 @@ public class MessageService {
 
         //проверяем пользовался ли юзер ботом ранее, елм да, то информационное сообщение не отправляем
 
-        if (userService.checkUser(update.getMessage().getFrom().getId())) {
+        AppUser appUser = new AppUser(update.getMessage().getFrom().getId());
+        if (userService.checkUser(appUser)) {
             sendMessage(chatId, """ 
                 Привет, """ + name + """          
                 ! \nВыбери какой приют тебя интересует:
@@ -79,9 +80,9 @@ public class MessageService {
 
             //если не пользовался, сохраняем его в базу
 
-            User newUser = new User();
-            newUser.setId(update.getMessage().getFrom().getId());
-            userDAO.addUser(newUser);
+            AppUser newAppUser = new AppUser();
+            newAppUser.setId(update.getMessage().getFrom().getId());
+            userDAO.addUser(newAppUser);
 
         }
 

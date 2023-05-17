@@ -17,7 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-public class VolunteerService {
+public class VolunteerService <T extends User> {
     private String groupChatId = "1807709894";
     private final TelegramBot bot;
     private final MessageService messageService;
@@ -79,8 +79,8 @@ public class VolunteerService {
             return null;
         }
     }
-
-    public void processUserReport(Update update) {
+    
+    public <T> void processUserReport(Update update, T user) {
         if (update.getMessage().hasPhoto() && update.getMessage().getCaption() != null) {
             List<PhotoSize> photos = update.getMessage().getPhoto();
             PhotoSize photo = photos.stream()

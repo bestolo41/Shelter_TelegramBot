@@ -1,7 +1,6 @@
 package com.skypro.shelter_telegrambot.service.impl;
 
 import com.skypro.shelter_telegrambot.configuration.HibernateSessionFactoryUtil;
-import com.skypro.shelter_telegrambot.model.User;
 import com.skypro.shelter_telegrambot.model.Volunteer;
 import com.skypro.shelter_telegrambot.service.VolunteerDAO;
 import org.hibernate.Session;

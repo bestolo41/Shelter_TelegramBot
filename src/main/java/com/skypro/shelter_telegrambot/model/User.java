@@ -1,68 +1,37 @@
 package com.skypro.shelter_telegrambot.model;
 
-import javax.persistence.*;
+import lombok.Data;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.Objects;
+@Data
+public abstract class User {
 
-/**
- * Класс, представляющий пользователя.
- */
-@Entity
-@Table(name = "users")
-public class User {
-    /**
-     * Идентификатор пользователя.
-     */
-    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private long id;
+        private long id;
+        private String fullName;
+        private int age;
+        private String address;
+        private String phoneNumber;
 
-    /**
-     * Конструктор по умолчанию класса User.
-     */
-    public User() {
-    }
-
-    /**
-     * Проверяет равенство объекта текущему объекту.
-     *
-     * @param o объект для сравнения.
-     * @return true, если объекты равны; иначе false.
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return id == user.id;
-    }
-
-    /**
-     * Возвращает хеш-код объекта.
-     *
-     * @return хеш-код объекта.
-     */
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    /**
-     * Устанавливает идентификатор пользователя.
-     *
-     * @param id идентификатор пользователя.
-     */
-    public void setId(long id) {
+        public User(long id) {
         this.id = id;
     }
+        public User() {
+        }
 
-    /**
-     * Возвращает идентификатор пользователя.
-     *
-     * @return идентификатор пользователя.
-     */
-    public long getId() {
-        return id;
-    }
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            User user = (User) o;
+            return id == user.id;
+        }
 
+        @Override
+        public int hashCode() {
+            return Objects.hash(id);
+        }
 }

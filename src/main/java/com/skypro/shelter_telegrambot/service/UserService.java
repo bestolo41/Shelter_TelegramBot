@@ -1,14 +1,8 @@
 package com.skypro.shelter_telegrambot.service;
 
-import com.skypro.shelter_telegrambot.model.CatShelterUser;
-import com.skypro.shelter_telegrambot.model.DogShelterUser;
 import com.skypro.shelter_telegrambot.model.User;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 
@@ -19,55 +13,68 @@ import java.util.ArrayList;
 @Service
 public class UserService {
     final UserDAO userDAO;
+    private final MessageService messageService;
 
     /**
      * Конструктор класса UserService.
      *
-     * @param userDAO объект DAO для работы с пользователями
+     * @param userDAO        объект DAO для работы с пользователями
+     * @param messageService
      */
-    public UserService(UserDAO userDAO) {
+    public UserService(UserDAO userDAO, MessageService messageService) {
         this.userDAO = userDAO;
+        this.messageService = messageService;
     }
 
     /**
      * Метод checkUser проверяет, использовал ли пользователь уже бота или нет.
      *
-     * @param userId Идентификатор пользователя
+     * @param user Пользователь
      * @return true, если пользователь использовал бота; false в противном случае
      */
-    public boolean checkUser(long userId) {
-        User u = new User();
-        u.setId(userId);
-        ArrayList<User> users = (ArrayList<User>) userDAO.getAllUsers();
 
-        return users.contains(u);
+    public <T extends User> boolean checkUser(T user) {
+        ArrayList<T> users = (ArrayList<T>) userDAO.getAllUsers(user);
+        return users.contains(user);
     }
 
-    /**
-     * Метод checkCatUser проверяет, является ли пользователь пользователем приюта для кошек.
-     *
-     * @param userId Идентификатор пользователя
-     * @return true, если пользователь является пользователем приюта для кошек; false в противном случае
-     */
-    public boolean checkCatUser(long userId) {
-        CatShelterUser u = new CatShelterUser();
-        u.setId(userId);
-        ArrayList<CatShelterUser> users = (ArrayList<CatShelterUser>) userDAO.getAllCatUsers();
-
-        return users.contains(u);
+    public <T extends User> void saveContacts(Update update, T user) {
+        long chatId = update.getMessage().getChatId();
+        if (user.getFullName() == null) {
+            user.setFullName(update.getMessage().getText());
+            messageService.sendMessage(chatId, "Имя и фамилия сохранены");
+            messageService.sendMessage(chatId, "Введите возраст:");
+        } else if (user.getAge() <= 0) {
+            user.setAge(Integer.parseInt(update.getMessage().getText()));
+            messageService.sendMessage(chatId, "Возраст сохранен");
+            messageService.sendMessage(chatId, "Введите номер телефона:");
+        } else if (user.getPhoneNumber() == null) {
+            user.setPhoneNumber(update.getMessage().getText());
+            messageService.sendMessage(chatId, "Номер телефона сохранен");
+            messageService.sendMessage(chatId, "Введите адрес проживания:");
+        } else if (user.getAddress() == null) {
+            user.setAddress(update.getMessage().getText());
+            userDAO.addUser(user);
+        }
     }
 
-    /**
-     * Метод checkDogUser проверяет, является ли пользователь пользователем приюта для собак.
-     *
-     * @param userId Идентификатор пользователя
-     * @return true, если пользователь является пользователем приюта для собак; false в противном случае
-     */
-    public boolean checkDogUser(long userId) {
-        DogShelterUser u = new DogShelterUser();
-        u.setId(userId);
-        ArrayList<DogShelterUser> users = (ArrayList<DogShelterUser>) userDAO.getAllDogUsers();
-
-        return users.contains(u);
+    public <T extends User> void saveParent(Update update, T user) {
+        long chatId = update.getMessage().getChatId();
+        if (user.getFullName() == null) {
+            user.setFullName(update.getMessage().getText());
+            messageService.sendMessage(chatId, "Имя и фамилия сохранены");
+            messageService.sendMessage(chatId, "Введите номер телефона:");
+        } else if (user.getPhoneNumber() == null) {
+            user.setPhoneNumber(update.getMessage().getText());
+            messageService.sendMessage(chatId, "Номер телефона сохранен");
+            messageService.sendMessage(chatId, "Введите @TelegramID клиента." +
+                    "Клиент может получить его по ссылке (@userinfobot)");
+        } else if (user.getParentId == 0) {
+            user.setParentId(update.getMessage().getText());
+            messageService.sendMessage(chatId, "ID сохранен");
+        }
+            userDAO.addUser(user);
+        }
     }
+
 }
