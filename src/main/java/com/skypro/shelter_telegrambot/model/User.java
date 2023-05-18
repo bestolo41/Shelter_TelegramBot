@@ -7,31 +7,36 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.Objects;
+
 @Data
 public abstract class User {
 
-        private long id;
-        private String fullName;
-        private int age;
-        private String address;
-        private String phoneNumber;
+    private long id;
+    private String fullName;
+    private int age;
+    private String address;
+    private String phoneNumber;
+    private long tutor_id;
+    private java.util.Date reportDate;
+    private java.util.Date trialEndDate;
 
-        public User(long id) {
+    public User(long id) {
         this.id = id;
     }
-        public User() {
-        }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            User user = (User) o;
-            return id == user.id;
-        }
+    public User() {
+    }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(id);
-        }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return id == user.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

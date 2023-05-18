@@ -17,6 +17,10 @@ public interface UserDAO {
      */
     <T extends User> void  addUser(T newUser);
 
+    <T extends User> T getUser(T user);
+
+    <T extends User> void updateUser(T user);
+
     /**
      * Возвращает список всех пользователей.
      *

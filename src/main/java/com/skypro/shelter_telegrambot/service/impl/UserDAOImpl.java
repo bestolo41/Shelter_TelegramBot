@@ -1,9 +1,6 @@
 package com.skypro.shelter_telegrambot.service.impl;
 
 import com.skypro.shelter_telegrambot.configuration.HibernateSessionFactoryUtil;
-import com.skypro.shelter_telegrambot.model.AppUser;
-import com.skypro.shelter_telegrambot.model.CatShelterUser;
-import com.skypro.shelter_telegrambot.model.DogShelterUser;
 import com.skypro.shelter_telegrambot.model.User;
 import com.skypro.shelter_telegrambot.service.UserDAO;
 import org.hibernate.Session;
@@ -31,6 +28,21 @@ public class UserDAOImpl  implements UserDAO {
             transaction.commit();
         }
     }
+
+    @Override
+    public <T extends User> T getUser(T user) {
+        return (T) HibernateSessionFactoryUtil.getSessionFactory().openSession().get(user.getClass(), user.getId());
+    }
+
+    @Override
+    public <T extends User> void updateUser(T user) {
+        try (Session session = HibernateSessionFactoryUtil.getSessionFactory().openSession()) {
+            Transaction transaction = session.beginTransaction();
+            session.update(user);
+            transaction.commit();
+        }
+    }
+
 
     @Override
     public <T extends User> List<T> getAllUsers(T o) {
