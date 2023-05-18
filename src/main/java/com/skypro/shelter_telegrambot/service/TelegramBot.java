@@ -1,17 +1,18 @@
 package com.skypro.shelter_telegrambot.service;
 
 import com.skypro.shelter_telegrambot.TelegramBotConfig.TelegramBotConfig;
-import com.skypro.shelter_telegrambot.model.Button;
-import com.skypro.shelter_telegrambot.model.CatShelterUser;
-import com.skypro.shelter_telegrambot.model.DogShelterUser;
+import com.skypro.shelter_telegrambot.model.*;
 
-import com.skypro.shelter_telegrambot.model.Volunteer;
 import lombok.Data;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 /**
@@ -23,10 +24,10 @@ import java.util.*;
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
 
-    private final Map<Long, CatShelterUser> catUsersForSaving = new HashMap<>();
-    private final Map<Long, DogShelterUser> dogUsersForSaving = new HashMap<>();
-    private final Map<Long, CatShelterUser> catUsersToSendTheReport = new HashMap<>();
-    private final Map<Long, DogShelterUser> dogUsersToSendTheReport = new HashMap<>();
+    private final Map<Long, ? super User> usersForContactSaving = new HashMap<>();
+    private final Map<Long, ? super User> usersToSendTheReport = new HashMap<>();
+    private final Map<Long, ? super User> parentsForSaving = new HashMap<>();
+
     private final CatShelterUser catUser = new CatShelterUser();
     private final DogShelterUser dogUser = new DogShelterUser();
     private final TelegramBotConfig telegramBotConfig;
@@ -102,11 +103,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/start":
                     // Обработка команды /start
                     messageService.startCommandReceived(chatId, update.getMessage().getChat().getFirstName(), update);
-                    dogUsersForSaving.remove(chatId);
-                    catUsersForSaving.remove(chatId);
+                    usersForContactSaving.remove(chatId);
                     break;
 
-                    //команда для волонтеров
+                //команда для волонтеров
                 case "/*volunteer_mode*":
                     messageService.sendMessage(chatId, "Выберите действия:",
                             messageService.createButtons(1, new ArrayList<>(Arrays.asList(
@@ -121,55 +121,31 @@ public class TelegramBot extends TelegramLongPollingBot {
                     // Обработка сообщений от пользователей, сохраняющих контакты для приюта для кошек
                     // ...
 
-                    if (catUsersForSaving.containsKey(chatId)) {
-
-                        if (catUsersForSaving.get(chatId).getFullName() == null) {
-                            catUsersForSaving.get(chatId).setFullName(update.getMessage().getText());
-                            messageService.sendMessage(chatId, "Имя и фамилия сохранены");
-                            messageService.sendMessage(chatId, "Введите возраст:");
-                        } else if (catUsersForSaving.get(chatId).getAge() <= 0) {
-                            catUsersForSaving.get(chatId).setAge(Integer.parseInt(update.getMessage().getText()));
-                            messageService.sendMessage(chatId, "Возраст сохранен");
-                            messageService.sendMessage(chatId, "Введите номер телефона:");
-                        } else if (catUsersForSaving.get(chatId).getPhoneNumber() == null) {
-                            catUsersForSaving.get(chatId).setPhoneNumber(update.getMessage().getText());
-                            messageService.sendMessage(chatId, "Номер телефона сохранен");
-                            messageService.sendMessage(chatId, "Введите адрес проживания:");
-                        } else if (catUsersForSaving.get(chatId).getAddress() == null) {
-                            catUsersForSaving.get(chatId).setAddress(update.getMessage().getText());
-                            messageService.sendMessage(chatId, "КОНТАКТ СОХРАНЕН", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                    new Button("Назад", "BACK_INFO_CAT")))));
-                            userDAO.addCatUser(catUsersForSaving.get(chatId));
-                            catUsersForSaving.remove(chatId);
-                        }
-                    } else if (dogUsersForSaving.containsKey(chatId)) {
-
-
-                        // Обработка сообщений от пользователей, сохраняющих контакты для приюта для собак
-                        // ...
-                        if (dogUsersForSaving.get(chatId).getFullName() == null) {
-                            dogUsersForSaving.get(chatId).setFullName(update.getMessage().getText());
-                            messageService.sendMessage(chatId, "Имя и фамилия сохранены");
-                            messageService.sendMessage(chatId, "Введите возраст:");
-                        } else if (dogUsersForSaving.get(chatId).getAge() <= 0) {
-                            dogUsersForSaving.get(chatId).setAge(Integer.parseInt(update.getMessage().getText()));
-                            messageService.sendMessage(chatId, "Возраст сохранен");
-                            messageService.sendMessage(chatId, "Введите номер телефона:");
-                        } else if (dogUsersForSaving.get(chatId).getPhoneNumber() == null) {
-                            dogUsersForSaving.get(chatId).setPhoneNumber(update.getMessage().getText());
-                            messageService.sendMessage(chatId, "Номер телефона сохранен");
-                            messageService.sendMessage(chatId, "Введите адрес проживания:");
-                        } else if (dogUsersForSaving.get(chatId).getAddress() == null) {
-                            dogUsersForSaving.get(chatId).setAddress(update.getMessage().getText());
-                            messageService.sendMessage(chatId, "КОНТАКТ СОХРАНЕН", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                    new Button("Назад", "BACK_INFO_DOG")))));
-                            userDAO.addDogUser(dogUsersForSaving.get(chatId));
-                            dogUsersForSaving.remove(chatId);
+                    if (usersForContactSaving.containsKey(chatId)) {
+                        User user = null;
+                        if (usersForContactSaving.get(chatId).getClass().equals(CatShelterUser.class)) {
+                            user = (CatShelterUser) usersForContactSaving.get(chatId);
+                        } else if (usersForContactSaving.get(chatId).getClass().equals(DogShelterUser.class)) {
+                            user = (DogShelterUser) usersForContactSaving.get(chatId);
                         }
 
-                        // Обработка сообщений от пользователей, отправляющих отчет о питомце
+                        assert user != null;
+                        userService.saveContacts(update, user);
+
+
+                    } else if (parentsForSaving.containsKey(chatId)) {
+                        User user = null;
+                        if (parentsForSaving.get(chatId).getClass().equals(CatParent.class)) {
+                            user = (CatParent) parentsForSaving.get(chatId);
+                        } else if (parentsForSaving.get(chatId).getClass().equals(DogParent.class)) {
+                            user = (DogParent) parentsForSaving.get(chatId);
+                        }
+                        userService.saveParent(update, user);
+
+
+                    // Обработка сообщений от пользователей, отправляющих отчет о питомце, если отправили отчет без фото
                         // ...
-                    } else if (catUsersToSendTheReport.containsKey(chatId) || dogUsersToSendTheReport.containsKey(chatId)) {
+                    } else if (usersToSendTheReport.containsKey(chatId)) {
                         messageService.sendMessage(update.getMessage().getChatId(),
                                 "Необходимо отправить и фото животного, и описание рациона и условий содержания",
                                 messageService.createButtons(1, new ArrayList<>(Arrays.asList(
@@ -181,11 +157,17 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         }
 
+        //обработка сообщения с фото
         if (update.hasMessage() && update.getMessage().hasPhoto()) {
             Long chatId = update.getMessage().getChatId();
-            if (catUsersToSendTheReport.containsKey(chatId) || dogUsersToSendTheReport.containsKey(chatId)) {
-                volunteerService.processUserReport(update);
-
+            if (usersToSendTheReport.containsKey(chatId)) {
+                User user = null;
+                if (usersToSendTheReport.get(chatId).getClass().equals(CatParent.class)) {
+                    user = (CatParent) usersToSendTheReport.get(chatId);
+                } else if (usersToSendTheReport.get(chatId).getClass().equals(DogParent.class)) {
+                    user = (DogParent) usersToSendTheReport.get(chatId);
+                }
+                volunteerService.processUserReport(update, user);
             }
         } else if (update.hasCallbackQuery())
 
@@ -211,8 +193,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     messageService.editMessage(chatId, callbackQueryMessageId, "Выбери какой приют тебя интересует:", messageService.createButtons(2, new ArrayList<>(Arrays.asList(
                             new Button("Приют для кошек", "CAT_SHELTER"),
                             new Button("Приют для собак", "DOG_SHELTER")))));
-                    catUsersToSendTheReport.remove(chatId);
-                    dogUsersToSendTheReport.remove(chatId);
                     break;
 
                 case "BACK_GENERAL_CAT":
@@ -224,7 +204,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                             new Button("Прислать отчет о питомце", "REPORT_CAT"),
                             new Button("Позвать волонтера", "VOLUNTEER_CAT"),
                             new Button("Главное меню", "MAIN_MENU")))));
-                    catUsersToSendTheReport.remove(chatId);
                     break;
 
                 case "BACK_GENERAL_DOG":
@@ -236,7 +215,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                             new Button("Прислать отчет о питомце", "REPORT_DOG"),
                             new Button("Позвать волонтера", "VOLUNTEER_DOG"),
                             new Button("Главное меню", "MAIN_MENU")))));
-                    dogUsersToSendTheReport.remove(chatId);
                     break;
 
                 case "BACK_INFO_CAT":
@@ -350,38 +328,54 @@ public class TelegramBot extends TelegramLongPollingBot {
                     break;
 
                 case "SET_CONTACT_CAT":
-                    if (userService.checkCatUser(update.getCallbackQuery().getFrom().getId())) {
+                    if (userService.checkUser(new CatShelterUser(chatId))) {
                         messageService.editMessage(chatId, callbackQueryMessageId, "Контакт уже сохранен", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                                 new Button("Назад", "BACK_INFO_CAT")))));
                         break;
                     }
-                    catUsersForSaving.put(chatId, new CatShelterUser(chatId));
+                    usersForContactSaving.put(chatId, new CatShelterUser(chatId));
                     messageService.deleteMessage(chatId, callbackQueryMessageId);
                     messageService.sendMessage(chatId, "Введите имя и фамилию:");
                     break;
 
                 case "SET_CONTACT_DOG":
-                    if (userService.checkDogUser(update.getCallbackQuery().getFrom().getId())) {
+                    if (userService.checkUser(new DogShelterUser(chatId))) {
                         messageService.editMessage(chatId, callbackQueryMessageId, "Контакт уже сохранен", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
                                 new Button("Назад", "BACK_INFO_DOG")))));
                         break;
                     }
-                    dogUsersForSaving.put(chatId, new DogShelterUser());
+                    usersForContactSaving.put(chatId, new DogShelterUser(chatId));
                     messageService.deleteMessage(chatId, callbackQueryMessageId);
                     messageService.sendMessage(chatId, "Введите имя и фамилию:");
                     break;
 
                 case "REPORT_CAT":
-                    catUsersToSendTheReport.put(chatId, new CatShelterUser());
-                    messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
-                            messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                    new Button("Назад", "BACK_GENERAL_CAT")))));
+                    CatParent catParent = new CatParent(chatId);
+                    if (userService.checkUser(catParent)) {
+                        catParent = userDAO.getUser(catParent);
+                        usersToSendTheReport.put(chatId, catParent);
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
+                                messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                        new Button("Назад", "BACK_GENERAL_CAT")))));
+                    } else {
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Вы не являетесь владельцем кошки. Обратитесь к волонтеру",
+                                messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                        new Button("Назад", "BACK_GENERAL_CAT")))));
+                    }
                     break;
                 case "REPORT_DOG":
-                    dogUsersToSendTheReport.put(chatId, new DogShelterUser());
-                    messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
-                            messageService.createButtons(1, new ArrayList<>(Arrays.asList(
-                                    new Button("Назад", "BACK_GENERAL_DOG")))));
+                    DogParent dogParent = new DogParent(chatId);
+                    if (userService.checkUser(dogParent)) {
+                        dogParent = userDAO.getUser(dogParent);
+                        usersToSendTheReport.put(chatId, dogParent);
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Опишите рацион и условия содержания животного, приложите фото животного",
+                                messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                        new Button("Назад", "BACK_GENERAL_DOG")))));
+                    } else {
+                        messageService.editMessage(chatId, callbackQueryMessageId, "Вы не являетесь владельцем собаки. Обратитесь к волонтеру",
+                                messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                                        new Button("Назад", "BACK_GENERAL_DOG")))));
+                    }
                     break;
 
                 case "VOLUNTEER_CAT":
@@ -466,17 +460,40 @@ public class TelegramBot extends TelegramLongPollingBot {
                     break;
 
                 case "ACCEPT_REPORT":
+                    User user = null;
+                    if (usersToSendTheReport.get(userChatId).getClass().equals(CatParent.class)) {
+                        user = (CatParent) usersToSendTheReport.get(userChatId);
+                    } else if (usersToSendTheReport.get(userChatId).getClass().equals(DogParent.class)) {
+                        user = (DogParent) usersToSendTheReport.get(userChatId);
+                    }
+                    LocalDate now = LocalDate.now();
+                    Date date = java.util.Date.from(now.atStartOfDay()
+                            .atZone(ZoneId.systemDefault())
+                            .toInstant());
+                    user.setReportDate(date);
+                    userDAO.updateUser(user);
+                    usersToSendTheReport.remove(user.getId());
+                    EditMessageReplyMarkup editMessageReplyMarkup = new EditMessageReplyMarkup();
+                    editMessageReplyMarkup.setReplyMarkup(null);
+                    editMessageReplyMarkup.setChatId(chatId);
+                    editMessageReplyMarkup.setMessageId((int) callbackQueryMessageId);
+                    try {
+                        execute(editMessageReplyMarkup);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    messageService.sendMessage(chatId, "Отчет принят");
                     messageService.sendMessage(userChatId, "Отчет принят волонтером");
                     break;
 
                 case "REJECT_REPORT":
                     messageService.sendMessage(userChatId, "Дорогой усыновитель, мы заметили, что ты заполняешь отчет не так подробно, как необходимо. " +
                             "Пожалуйста, подойди ответственнее к этому занятию. " +
-                            "В противном случае волонтеры приюта будут обязаны самолично проверять условия содержания животного");
+                            "В противном случае волонтеры приюта будут обязаны самолично проверять условия содержания животного. " +
+                            "Отчет не принят.");
+                    usersToSendTheReport.remove(userChatId);
                     break;
-                default:
-                    messageService.sendMessage(chatId, "Извини, я не понял");
-                    break;
+
 
                 case "BECOME_A_VOLUNTEER":
                     if (volunteerService.checkVolunteer(chatId)) {
@@ -489,7 +506,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                         volunteerDAO.addVolunteer(volunteer);
                         messageService.editMessage(chatId, callbackQueryMessageId, "Поздравляем! Вы теперь волонтер");
                     }
+                    break;
 
+                case "ADD_NEW_PARENT":
+                    messageService.editMessage(chatId, callbackQueryMessageId, "Кого нужно добавить?", messageService.createButtons(1, new ArrayList<>(Arrays.asList(
+                            new Button("Кошатника", "NEW_CAT_PARENT"),
+                            new Button("Собачника", "NEW_DOG_PARENT")
+                    ))));
+                    break;
+
+                case "NEW_CAT_PARENT":
+                    messageService.editMessage(chatId, callbackQueryMessageId,
+                            "Введите имя и фамилию клиента:");
+                    parentsForSaving.put(chatId, new CatParent());
+                    break;
+
+                case "NEW_DOG_PARENT":
+                    messageService.editMessage(chatId, callbackQueryMessageId,
+                            "Введите имя и фамилию клиента:");
+                    parentsForSaving.put(chatId, new DogParent());
+                    break;
+
+                default:
+                    messageService.sendMessage(chatId, "Извини, я не понял");
+                    break;
             }
         }
     }

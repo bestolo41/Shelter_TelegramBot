@@ -1,7 +1,8 @@
 package com.skypro.shelter_telegrambot.service;
 
+import com.skypro.shelter_telegrambot.model.AppUser;
 import com.skypro.shelter_telegrambot.model.Button;
-import com.skypro.shelter_telegrambot.model.User;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -22,6 +23,7 @@ public class MessageService {
     private final UserService userService;
     private final UserDAO userDAO;
 
+    @Lazy
     public MessageService(TelegramBot telegramBot, UserService userService, UserDAO userDAO) {
         this.telegramBot = telegramBot;
         this.userService = userService;
@@ -57,36 +59,38 @@ public class MessageService {
 
         //проверяем пользовался ли юзер ботом ранее, елм да, то информационное сообщение не отправляем
 
-        if (userService.checkUser(update.getMessage().getFrom().getId())) {
+        AppUser appUser = new AppUser(update.getMessage().getFrom().getId());
+        if (userService.checkUser(appUser)) {
             sendMessage(chatId, """ 
-                Привет, """ + name + """          
-                ! \nВыбери какой приют тебя интересует:
-                """, createButtons(2, new ArrayList<>(Arrays.asList(
+                    Привет, """ + name + """          
+                    ! \nВыбери какой приют тебя интересует:
+                    """, createButtons(2, new ArrayList<>(Arrays.asList(
                     new Button("Приют для кошек", "CAT_SHELTER"),
                     new Button("Приют для собак", "DOG_SHELTER")))));
         } else {
             sendMessage(chatId, """ 
-                Привет, """ + name + """
-                !
-                Я могу рассказать тебе, что нужно знать и уметь для того, чтобы забрать животное из приюта.               
-                Также я могу предоставить всю информацию о всех доступных приютах города.                                
-                А еще ты можешь отправлять мне ежедневные отчеты о том, как животное приспосабливается к новой обстановке.
-                
-                Выбери какой приют тебя интересует:
-                """, createButtons(2, new ArrayList<>(Arrays.asList(
+                    Привет, """ + name + """
+                    !
+                    Я могу рассказать тебе, что нужно знать и уметь для того, чтобы забрать животное из приюта.               
+                    Также я могу предоставить всю информацию о всех доступных приютах города.                                
+                    А еще ты можешь отправлять мне ежедневные отчеты о том, как животное приспосабливается к новой обстановке.
+                                    
+                    Выбери какой приют тебя интересует:
+                    """, createButtons(2, new ArrayList<>(Arrays.asList(
                     new Button("Приют для кошек", "CAT_SHELTER"),
                     new Button("Приют для собак", "DOG_SHELTER")))));
 
             //если не пользовался, сохраняем его в базу
 
-            User newUser = new User();
-            newUser.setId(update.getMessage().getFrom().getId());
-            userDAO.addUser(newUser);
+            AppUser newAppUser = new AppUser();
+            newAppUser.setId(update.getMessage().getFrom().getId());
+            userDAO.addUser(newAppUser);
 
         }
 
 
     }
+
     /**
      * Создает и отправляет сообщение, которое содержит только текст
      *

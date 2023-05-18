@@ -1,6 +1,6 @@
 package com.skypro.shelter_telegrambot.service;
 
-import com.skypro.shelter_telegrambot.model.User;
+import com.skypro.shelter_telegrambot.model.AppUser;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -29,13 +29,13 @@ public class UserRepository {
     /**
      * Метод saveUser сохраняет пользователя в базе данных.
      *
-     * @param user Пользователь для сохранения в базе данных.
+     * @param appUser Пользователь для сохранения в базе данных.
      */
-    public static void saveUser(User user) {
+    public static void saveUser(AppUser appUser) {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
             transaction = session.beginTransaction();
-            session.save(user);
+            session.save(appUser);
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) {

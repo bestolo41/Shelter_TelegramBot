@@ -1,6 +1,7 @@
 package com.skypro.shelter_telegrambot.service;
 
 import com.skypro.shelter_telegrambot.model.Button;
+import com.skypro.shelter_telegrambot.model.CatParent;
 import com.skypro.shelter_telegrambot.model.Volunteer;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
@@ -17,7 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-public class VolunteerService {
+public class VolunteerService <T extends User> {
     private String groupChatId = "-1001972925833";
     private final TelegramBot bot;
     private final MessageService messageService;
@@ -79,22 +80,23 @@ public class VolunteerService {
             return null;
         }
     }
-
-    public void processUserReport(Update update) {
+    
+    public <T extends com.skypro.shelter_telegrambot.model.User> void processUserReport(Update update, T user) {
         if (update.getMessage().hasPhoto() && update.getMessage().getCaption() != null) {
             List<PhotoSize> photos = update.getMessage().getPhoto();
             PhotoSize photo = photos.stream()
                     .max(Comparator.comparing(PhotoSize::getFileSize)).orElse(null);
             String fileId = photo.getFileId();
             String userName = update.getMessage().getFrom().getUserName();
-            Long userChatId = update.getMessage().getChatId();
+            long userChatId = update.getMessage().getChatId();
+            long tutorId = user.getTutor_id();
 
 
             try {
-                messageService.sendMessage(Long.parseLong(groupChatId), "Пользователь (@" + userName + ") направил отчет о питомце");
+                messageService.sendMessage(tutorId, "Пользователь (@" + userName + ") направил отчет о питомце");
                 bot.execute(
                         SendPhoto.builder()
-                        .chatId(groupChatId)
+                        .chatId(tutorId)
                         .caption(update.getMessage().getCaption())
                         .photo(new InputFile(fileId))
                                 .replyMarkup(messageService.createButtons(2, new ArrayList<>(Arrays.asList(

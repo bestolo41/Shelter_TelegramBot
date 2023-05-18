@@ -68,31 +68,4 @@ public class DogShelterService {
                 "E-mail: security@dogshelter.org";
     }
 
-    /**
-     * Отправляет запрос на помощь волонтеру.
-     *
-     * @param chatId идентификатор чата.
-     */
-    public void requestVolunteer(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText("Пользователь нуждается в помощи волонтера!");
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-
-        InlineKeyboardButton volunteerButton = new InlineKeyboardButton();
-        volunteerButton.setText("Помочь пользователю");
-        volunteerButton.setUrl("https://t.me/Digital20_group"); // Замените на ссылку вашей группы
-
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        row.add(volunteerButton);
-
-        keyboard.add(row);
-        inlineKeyboardMarkup.setKeyboard(keyboard);
-
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        execute(String.valueOf(message)); // отправка сообщения с помощью TelegramBotsApi
-    }
 }
