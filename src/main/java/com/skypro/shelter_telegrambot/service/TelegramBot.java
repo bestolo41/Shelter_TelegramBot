@@ -8,9 +8,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
@@ -525,6 +527,123 @@ public class TelegramBot extends TelegramLongPollingBot {
                     messageService.editMessage(chatId, callbackQueryMessageId,
                             "Введите имя и фамилию клиента:");
                     parentsForSaving.put(chatId, new DogParent());
+                    break;
+
+                case "CONFIRM":
+                    messageService.sendMessage(userChatId, "Поздравляем! Вы прошли испытательный срок!");
+                    EditMessageText editMessageText3 = new EditMessageText();
+                    editMessageText3.setText(update.getCallbackQuery().getMessage().getText());
+                    editMessageText3.setChatId(chatId);
+                    editMessageText3.setMessageId((int) callbackQueryMessageId);
+                    editMessageText3.setReplyMarkup(null);
+                    try {
+                        execute(editMessageText3);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    messageService.sendMessage(chatId, "Испытательный срок завершен");
+                    break;
+
+                case "PROLONG_14":
+                    messageService.sendMessage(userChatId, "Волонтер продлил Вам испытательный срок еще на 14 дней. Вам необходимо внимательнее обращаться с животным и ответственнее относиться к отчетам о питомце");
+                    CatParent catParent1 = new CatParent(userChatId);
+                    DogParent dogParent1 = new DogParent(userChatId);
+                    List<CatParent> allCatParents = userDAO.getAllUsers(catParent1);
+                    List<DogParent> allDogParents = userDAO.getAllUsers(dogParent1);
+                    if (allCatParents.contains(catParent1)) {
+                        catParent1 = allCatParents.get(allCatParents.indexOf(catParent1));
+                        LocalDate trialEndDate = Instant.ofEpochMilli(catParent1
+                                        .getReportDate().getTime())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        if (trialEndDate.isEqual(LocalDate.now())) {
+                            LocalDate newTrialEndDate = trialEndDate.plusDays(14);
+                            Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toInstant());
+                            catParent1.setTrialEndDate(newDate);
+                            userDAO.updateUser(catParent1);
+                        }
+                    } else if (allDogParents.contains(dogParent1)) {
+                        dogParent1 = allDogParents.get(allDogParents.indexOf(dogParent1));
+                        LocalDate trialEndDate = Instant.ofEpochMilli(dogParent1
+                                        .getReportDate().getTime())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        if (trialEndDate.isEqual(LocalDate.now())) {
+                            LocalDate newTrialEndDate = trialEndDate.plusDays(14);
+                            Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toInstant());
+                            dogParent1.setTrialEndDate(newDate);
+                            userDAO.updateUser(dogParent1);
+                        }
+                    }
+
+                    EditMessageText editMessageText = new EditMessageText();
+                    editMessageText.setText(update.getCallbackQuery().getMessage().getText());
+                    editMessageText.setChatId(chatId);
+                    editMessageText.setMessageId((int) callbackQueryMessageId);
+                    editMessageText.setReplyMarkup(null);
+                    try {
+                        execute(editMessageText);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    messageService.sendMessage(chatId, "Испытательный срок продлен на 14 дней");
+                    break;
+
+                case "PROLONG_30":
+                    messageService.sendMessage(userChatId, "Волонтер продлил Вам испытательный срок еще на 30 дней. Вам необходимо внимательнее обращаться с животным и ответственнее относиться к отчетам о питомце");
+                    CatParent catParent2 = new CatParent(userChatId);
+                    DogParent dogParent2 = new DogParent(userChatId);
+                    List<CatParent> allCatParents2 = userDAO.getAllUsers(catParent2);
+                    List<DogParent> allDogParents2 = userDAO.getAllUsers(dogParent2);
+                    if (allCatParents2.contains(catParent2)) {
+                        catParent2 = allCatParents2.get(allCatParents2.indexOf(catParent2));
+                        LocalDate trialEndDate = Instant.ofEpochMilli(catParent2
+                                        .getReportDate().getTime())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        if (trialEndDate.isEqual(LocalDate.now())) {
+                            LocalDate newTrialEndDate = trialEndDate.plusDays(30);
+                            Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toInstant());
+                            catParent2.setTrialEndDate(newDate);
+                            userDAO.updateUser(catParent2);
+                        }
+                    } else if (allDogParents2.contains(dogParent2)) {
+                        dogParent2 = allDogParents2.get(allDogParents2.indexOf(dogParent2));
+                        LocalDate trialEndDate = Instant.ofEpochMilli(dogParent2
+                                        .getReportDate().getTime())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate();
+
+                        if (trialEndDate.isEqual(LocalDate.now())) {
+                            LocalDate newTrialEndDate = trialEndDate.plusDays(30);
+                            Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toInstant());
+                            dogParent2.setTrialEndDate(newDate);
+                            userDAO.updateUser(dogParent2);
+                        }
+                    }
+
+                    EditMessageText editMessageText1 = new EditMessageText();
+                    editMessageText1.setText(update.getCallbackQuery().getMessage().getText());
+                    editMessageText1.setChatId(chatId);
+                    editMessageText1.setMessageId((int) callbackQueryMessageId);
+                    editMessageText1.setReplyMarkup(null);
+                    try {
+                        execute(editMessageText1);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    messageService.sendMessage(chatId, "Испытательный срок продлен на 30 дней");
                     break;
 
                 default:
