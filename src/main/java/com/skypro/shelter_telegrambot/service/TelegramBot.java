@@ -553,33 +553,33 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (allCatParents.contains(catParent1)) {
                         catParent1 = allCatParents.get(allCatParents.indexOf(catParent1));
                         LocalDate trialEndDate = Instant.ofEpochMilli(catParent1
-                                        .getReportDate().getTime())
+                                        .getTrialEndDate().getTime())
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDate();
 
-                        if (trialEndDate.isEqual(LocalDate.now())) {
+
                             LocalDate newTrialEndDate = trialEndDate.plusDays(14);
                             Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
                                     .atZone(ZoneId.systemDefault())
                                     .toInstant());
                             catParent1.setTrialEndDate(newDate);
                             userDAO.updateUser(catParent1);
-                        }
+
                     } else if (allDogParents.contains(dogParent1)) {
                         dogParent1 = allDogParents.get(allDogParents.indexOf(dogParent1));
                         LocalDate trialEndDate = Instant.ofEpochMilli(dogParent1
-                                        .getReportDate().getTime())
+                                        .getTrialEndDate().getTime())
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDate();
 
-                        if (trialEndDate.isEqual(LocalDate.now())) {
+
                             LocalDate newTrialEndDate = trialEndDate.plusDays(14);
                             Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
                                     .atZone(ZoneId.systemDefault())
                                     .toInstant());
                             dogParent1.setTrialEndDate(newDate);
                             userDAO.updateUser(dogParent1);
-                        }
+
                     }
 
                     EditMessageText editMessageText = new EditMessageText();
@@ -604,33 +604,33 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (allCatParents2.contains(catParent2)) {
                         catParent2 = allCatParents2.get(allCatParents2.indexOf(catParent2));
                         LocalDate trialEndDate = Instant.ofEpochMilli(catParent2
-                                        .getReportDate().getTime())
+                                        .getTrialEndDate().getTime())
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDate();
 
-                        if (trialEndDate.isEqual(LocalDate.now())) {
+
                             LocalDate newTrialEndDate = trialEndDate.plusDays(30);
                             Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
                                     .atZone(ZoneId.systemDefault())
                                     .toInstant());
                             catParent2.setTrialEndDate(newDate);
                             userDAO.updateUser(catParent2);
-                        }
+
                     } else if (allDogParents2.contains(dogParent2)) {
                         dogParent2 = allDogParents2.get(allDogParents2.indexOf(dogParent2));
                         LocalDate trialEndDate = Instant.ofEpochMilli(dogParent2
-                                        .getReportDate().getTime())
+                                        .getTrialEndDate().getTime())
                                 .atZone(ZoneId.systemDefault())
                                 .toLocalDate();
 
-                        if (trialEndDate.isEqual(LocalDate.now())) {
+
                             LocalDate newTrialEndDate = trialEndDate.plusDays(30);
                             Date newDate = java.util.Date.from(newTrialEndDate.atStartOfDay()
                                     .atZone(ZoneId.systemDefault())
                                     .toInstant());
                             dogParent2.setTrialEndDate(newDate);
                             userDAO.updateUser(dogParent2);
-                        }
+
                     }
 
                     EditMessageText editMessageText1 = new EditMessageText();
